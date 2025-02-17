@@ -20,9 +20,9 @@ public class Serializer {
             var clazz = currentObject.getClass();
             // Complex type case
             // I think we can handle simple types without getter/setters bc no laziness is required
-            // This excludes inherited fields aaah
             try {
                 System.out.println("{");
+                // TODO: handle inherited fields
                 var fields = clazz.getDeclaredFields();
                 System.out.printf("\t\"__type__\": %s%n", clazz.getName());
                 System.out.printf("\t\"__id__\": %s%n", currentObjectId);
@@ -52,8 +52,8 @@ public class Serializer {
                                 }
                             }
                         } else {
-                            // Can we handle this case?o
-                            // We probably can override .get() on ArrayList, but element access to complex types?
+                            // Can we handle this case?
+                            // We probably can override .get() on ArrayList, but element access on arrays?
                             for (int i = 0; i < length; i++) {
                                 var elementValue = Array.get(value, i);
                                 if (elementValue == null) {
