@@ -46,6 +46,12 @@ public class Main {
 
         sample.secondOne = new SampleClass[1];
         sample.secondOne[0] = sample2;
-        Serializer.serialize(sample, "");
+        sample2.secondOne = new SampleClass[1];
+        sample2.secondOne[0] = sample;
+
+        Serializer serializer = new Serializer();
+        serializer.serialize(sample, "");
+        serializer.finish();
+
     }
 }
