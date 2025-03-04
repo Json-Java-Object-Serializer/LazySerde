@@ -2,36 +2,46 @@ package lazySerde;
 
 import org.apache.commons.text.StringEscapeUtils;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+
 public class Writer {
 
     private final int indent = 4;
     private int currentOffset = 0;
-    private void handleOffset() {
+    private OutputStream output;
+    private void handleOffset() throws IOException {
         for(int i = 0; i < currentOffset; i++) {
-            System.out.print(" ");
+            print(" ");
         }
     }
 
-    public Writer() {
+    public Writer(OutputStream output) throws IOException {
+        this.output = output;
         startNewObject();
         startArrayField("serialization");
     }
 
-    public void startNewObject() {
+    public void startNewObject() throws IOException {
         handleOffset();
-        System.out.print("{\n");
+        print("{\n");
         currentOffset += indent;
     }
 
-    public void endObject() {
+    public void endObject() throws IOException {
         currentOffset -= indent;
         handleOffset();
-        System.out.print("},\n");
+        print("},\n");
     }
 
-    public void setPrimitiveField(String fieldName, Object primitive) {
+    public void setPrimitiveField(String fieldName, Object primitive) throws IOException {
         handleOffset();
-        System.out.printf("\"%s\": %s,\n", fieldName, formatPrimitive(primitive));
+        print(String.format("\"%s\": %s,\n", fieldName, formatPrimitive(primitive)));
+    }
+
+    private void print(String str) throws IOException {
+        output.write(str.getBytes(StandardCharsets.UTF_8));
     }
 
     private String formatPrimitive(Object primitive) {
@@ -45,42 +55,41 @@ public class Writer {
         }
     }
 
-    public void setMetaField(String fieldName, Object info) {
+    public void setMetaField(String fieldName, Object info) throws IOException {
         setPrimitiveField("@" + fieldName, info);
     }
 
-    public void addRedirection(String fieldName, int id) {
+    public void addRedirection(String fieldName, int id) throws IOException {
         handleOffset();
-        System.out.printf("\"%s\": ", fieldName);
+        print(String.format("\"%s\": ", fieldName));
         addSimpleRedirection(id);
     }
 
-    public void startArrayField(String fieldName) {
+    public void startArrayField(String fieldName) throws IOException {
         handleOffset();
-        System.out.printf("\"%s\": [\n", fieldName);
+        print(String.format("\"%s\": [\n", fieldName));
         currentOffset += indent;
     }
 
-    public void addArrayPrimitive(Object elementValue) {
+    public void addArrayPrimitive(Object elementValue) throws IOException {
         handleOffset();
-        System.out.print(formatPrimitive(elementValue) + ",\n" );
+        print(String.format(formatPrimitive(elementValue) + ",\n" ));
     }
 
-    public void endArray() {
+    public void endArray() throws IOException {
         currentOffset -= indent;
         handleOffset();
-        System.out.print("],\n");
+        print("],\n");
     }
 
-    public void addSimpleRedirection(int id) {
+    public void addSimpleRedirection(int id) throws IOException {
         startNewObject();
         setMetaField("redirect", id);
         endObject();
     }
 
-    public void finish() {
+    public void finish() throws IOException {
         endArray();
         endObject();
     }
-
 }

@@ -1,9 +1,11 @@
 package lazySerde;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         var sample = new SampleClass();
         sample.io2wur = 2;
         sample.mnn = 1;

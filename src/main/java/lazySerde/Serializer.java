@@ -3,6 +3,9 @@ package lazySerde;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.StringEscapeUtils;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.ArrayDeque;
@@ -11,8 +14,11 @@ import java.util.Deque;
 public class Serializer {
     private final ArrayDeque<Object> writeQueue = new ArrayDeque<>();
     private final ObjectManager manager = new ObjectManager();
-    private final Writer writer = new Writer();
+    private final Writer writer = new Writer(new FileOutputStream("out.json"));
     private int currentObjectId = -1;
+
+    public Serializer() throws IOException {
+    }
 
     private int getRedirectionId(Object value) {
         Integer newObjectId = manager.getId(value);
@@ -93,7 +99,7 @@ public class Serializer {
         }
     }
 
-    public void finish() {
+    public void finish() throws IOException {
         writer.finish();
     }
 
