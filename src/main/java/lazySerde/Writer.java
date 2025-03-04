@@ -79,8 +79,8 @@ public class Writer {
     }
 
     public void finish() {
-        currentOffset -= 2 * indent;
-        System.out.print("    ]\n}\n");
+        endArray();
+        endObject();
     }
 
 }
