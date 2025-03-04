@@ -1,70 +1,43 @@
 {
-    "serialization": [
-        {
-            "@primary": true,
-            "@className": "lazySerde.SampleClass",
-            "@id": 0,
-            "value1": -1,
-            "value2": 15.0,
-            "aha": 13.2,
-            "sldkjfsldjf": 1123123,
-            "mnn": 1,
-            "io2wur": 2,
-            "woieur": "c",
-            "qowieuq": false,
-            "sndfmsdfh": "Simple String",
-            "sndfmsdfh2": "\"Complex\" String",
-            "nullish": null,
-            "handled": [
-                0,
-                8,
-                16,
-                24,
-                32,
-            ],
-            "handledString": [
-                "wow",
-                "\"that",
-                "actually works\"",
-            ],
-            "secondOne": [
-                {
-                    "@redirect": 1,
-                },
-            ],
-        },
-        {
-            "@primary": false,
-            "@className": "lazySerde.SampleClass",
-            "@id": 1,
-            "value1": 1,
-            "value2": 19.0,
-            "aha": 13.0,
-            "sldkjfsldjf": 1123,
-            "mnn": -1,
-            "io2wur": -2,
-            "woieur": "i",
-            "qowieuq": false,
-            "sndfmsdfh": "Sile String",
-            "sndfmsdfh2": "omplex\" String",
-            "nullish": null,
-            "handled": [
-                0,
-                2,
-                4,
-                6,
-                8,
-            ],
-            "handledString": [
-                "WoW",
-                "\"HHHHH",
-                "slkjfslkdjfklsdjfklsdj",
-            ],
-            "secondOne": [
-                {
-                    "@redirect": 0,
-                },
-            ],
-        },
-    ],
-},
+  "serialization" : [ {
+    "@primary" : true,
+    "@className" : "lazySerde.SampleClass",
+    "@id" : 0,
+    "value1" : -1,
+    "value2" : 15.0,
+    "aha" : 13.2,
+    "sldkjfsldjf" : 1123123,
+    "mnn" : 1,
+    "io2wur" : 2,
+    "woieur" : "c",
+    "qowieuq" : false,
+    "sndfmsdfh" : "Simple String",
+    "sndfmsdfh2" : "\"Complex\" String",
+    "nullish" : null,
+    "handled" : [ 0, 8, 16, 24, 32 ],
+    "handledString" : [ "wow", "\"that", "actually works\"" ],
+    "secondOne" : [ {
+      "@redirect" : 1
+    } ]
+  }, {
+    "@primary" : false,
+    "@className" : "lazySerde.SampleClass",
+    "@id" : 1,
+    "value1" : 1,
+    "value2" : 19.0,
+    "aha" : 13.0,
+    "sldkjfsldjf" : 1123,
+    "mnn" : -1,
+    "io2wur" : -2,
+    "woieur" : "i",
+    "qowieuq" : false,
+    "sndfmsdfh" : "Sile String",
+    "sndfmsdfh2" : "omplex\" String",
+    "nullish" : null,
+    "handled" : [ 0, 2, 4, 6, 8 ],
+    "handledString" : [ "WoW", "\"HHHHH", "slkjfslkdjfklsdjfklsdj" ],
+    "secondOne" : [ {
+      "@redirect" : 0
+    } ]
+  } ]
+}

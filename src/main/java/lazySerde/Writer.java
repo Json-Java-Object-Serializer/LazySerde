@@ -1,95 +1,86 @@
 package lazySerde;
 
-import org.apache.commons.text.StringEscapeUtils;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 
 public class Writer {
 
+    private final JsonGenerator jsonGenerator;
     private final int indent = 4;
-    private int currentOffset = 0;
-    private OutputStream output;
-    private void handleOffset() throws IOException {
-        for(int i = 0; i < currentOffset; i++) {
-            print(" ");
-        }
-    }
 
     public Writer(OutputStream output) throws IOException {
-        this.output = output;
-        startNewObject();
-        startArrayField("serialization");
+        // Create a JsonFactory and configure it for pretty printing
+        JsonFactory jsonFactory = new JsonFactory();
+        jsonGenerator = jsonFactory.createGenerator(output);
+        jsonGenerator.useDefaultPrettyPrinter();
+
+        // Start the JSON structure
+        jsonGenerator.writeStartObject(); // Start root object
+        jsonGenerator.writeFieldName("serialization");
+        jsonGenerator.writeStartArray(); // Start the "serialization" array
     }
 
     public void startNewObject() throws IOException {
-        handleOffset();
-        print("{\n");
-        currentOffset += indent;
+        jsonGenerator.writeStartObject(); // Start a new nested object
     }
 
     public void endObject() throws IOException {
-        currentOffset -= indent;
-        handleOffset();
-        print("},\n");
+        jsonGenerator.writeEndObject(); // End the current object
     }
 
     public void setPrimitiveField(String fieldName, Object primitive) throws IOException {
-        handleOffset();
-        print(String.format("\"%s\": %s,\n", fieldName, formatPrimitive(primitive)));
-    }
-
-    private void print(String str) throws IOException {
-        output.write(str.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private String formatPrimitive(Object primitive) {
+        jsonGenerator.writeFieldName(fieldName); // Write field name
         if (primitive == null) {
-            return "null";
-        } else
-        if (primitive.getClass().equals(String.class) || primitive.getClass().equals(Character.class)) {
-            return String.format("\"%s\"", StringEscapeUtils.escapeJson(primitive.toString()));
+            jsonGenerator.writeNull(); // Write null value
+        } else if (primitive instanceof String || primitive instanceof Character) {
+            jsonGenerator.writeString(primitive.toString()); // Write string value
         } else {
-            return primitive.toString();
+            jsonGenerator.writeNumber(primitive.toString()); // Write number value
         }
     }
 
     public void setMetaField(String fieldName, Object info) throws IOException {
-        setPrimitiveField("@" + fieldName, info);
+        setPrimitiveField("@" + fieldName, info); // Write meta field with "@" prefix
     }
 
     public void addRedirection(String fieldName, int id) throws IOException {
-        handleOffset();
-        print(String.format("\"%s\": ", fieldName));
-        addSimpleRedirection(id);
+        jsonGenerator.writeFieldName(fieldName); // Write field name
+        startNewObject(); // Start a new object for redirection
+        setMetaField("redirect", id); // Add the "redirect" meta field
+        endObject(); // End the redirection object
     }
 
     public void startArrayField(String fieldName) throws IOException {
-        handleOffset();
-        print(String.format("\"%s\": [\n", fieldName));
-        currentOffset += indent;
+        jsonGenerator.writeFieldName(fieldName); // Write field name
+        jsonGenerator.writeStartArray(); // Start a new array
     }
 
     public void addArrayPrimitive(Object elementValue) throws IOException {
-        handleOffset();
-        print(String.format(formatPrimitive(elementValue) + ",\n" ));
+        if (elementValue == null) {
+            jsonGenerator.writeNull(); // Write null value
+        } else if (elementValue instanceof String || elementValue instanceof Character) {
+            jsonGenerator.writeString(elementValue.toString()); // Write string value
+        } else {
+            jsonGenerator.writeNumber(elementValue.toString()); // Write number value
+        }
     }
 
     public void endArray() throws IOException {
-        currentOffset -= indent;
-        handleOffset();
-        print("],\n");
+        jsonGenerator.writeEndArray(); // End the current array
     }
 
     public void addSimpleRedirection(int id) throws IOException {
-        startNewObject();
-        setMetaField("redirect", id);
-        endObject();
+        startNewObject(); // Start a new object
+        setMetaField("redirect", id); // Add the "redirect" meta field
+        endObject(); // End the object
     }
 
     public void finish() throws IOException {
-        endArray();
-        endObject();
+        jsonGenerator.writeEndArray(); // End the "serialization" array
+        jsonGenerator.writeEndObject(); // End the root object
+        jsonGenerator.close(); // Close the JsonGenerator
     }
 }
