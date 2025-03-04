@@ -1,9 +1,12 @@
 package lazySerde;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         var sample = new SampleClass();
         sample.io2wur = 2;
         sample.mnn = 1;
@@ -50,8 +53,15 @@ public class Main {
         sample2.secondOne[0] = sample;
 
         Serializer serializer = new Serializer();
-        serializer.serialize(sample, "");
+        serializer.serialize(sample, "out.json");
         serializer.finish();
 
+        Deserializer deserializer = new Deserializer();
+
+        deserializer.index(Path.of("out.json"));
+        var res = deserializer.readObject(1);
+        System.out.println(res);
+        var res2 = deserializer.readObject(0);
+        System.out.println(res2);
     }
 }

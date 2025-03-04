@@ -1,10 +1,10 @@
 package lazySerde;
 
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 
 public class ObjectManager {
 
-    private final HashMap<Object, Integer> objects = new HashMap<Object, Integer>();
+    private final IdentityHashMap<Object, Integer> objects = new IdentityHashMap<Object, Integer>();
 
     public Integer getId(Object value) {
         return objects.get(value);
