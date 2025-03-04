@@ -5,31 +5,25 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 import java.io.*;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Deserializer {
-    private MappedByteBuffer mappedByteBuffer;
+    private FileInputStream file;
     private Map<Integer, Long> offsets;
 
     public void index(Path filename) throws IOException {
+        file = new FileInputStream(String.valueOf(filename));
+
         getOffsetsWithIds(filename);
         System.out.println(offsets);
-
-        try (FileChannel fileChannel = FileChannel.open(filename, StandardOpenOption.READ)) {
-            this.mappedByteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
-        }
     }
 
-    public void getOffsetsWithIds(Path filename) throws IOException {
+    private void getOffsetsWithIds(Path filename) throws IOException {
         JsonFactory jsonFactory = new JsonFactory();
-        JsonParser jsonParser = jsonFactory.createParser(new File(String.valueOf(filename)));
+        file.getChannel().position(0);
+        JsonParser jsonParser = jsonFactory.createParser(file);
 
         offsets = new HashMap<>();
 
@@ -63,5 +57,43 @@ public class Deserializer {
                 }
             }
         }
+    }
+
+    public HashMap<String, Object> readObject(int id) throws IOException {
+        if (!offsets.containsKey(id)) {
+            return null;
+        }
+
+        HashMap<String, Object> result = new HashMap<>();
+
+        JsonFactory jsonFactory = new JsonFactory();
+        file.getChannel().position(offsets.get(id));
+        JsonParser jsonParser = jsonFactory.createParser(file);
+        while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+            if (jsonParser.currentToken() == JsonToken.FIELD_NAME) {
+                String name = jsonParser.currentName();
+                jsonParser.nextToken();
+                var value = switch (jsonParser.currentToken()) {
+                    case VALUE_NUMBER_INT -> jsonParser.getIntValue();
+                    case VALUE_NUMBER_FLOAT -> jsonParser.getFloatValue();
+                    case VALUE_TRUE -> true;
+                    case VALUE_FALSE -> false;
+                    case VALUE_NULL -> null;
+                    case VALUE_STRING -> jsonParser.getValueAsString();
+                    case NOT_AVAILABLE -> throw new IOException();
+                    case START_OBJECT -> "@NESTED OBJECT DETECTED";
+                    case END_OBJECT -> throw new IOException();
+                    case START_ARRAY -> "@ARRAY DETECTED";
+                    case END_ARRAY -> throw new IOException();
+                    case FIELD_NAME -> throw new IOException();
+                    case VALUE_EMBEDDED_OBJECT -> throw new IOException();
+                };
+                if (jsonParser.currentToken() == JsonToken.START_ARRAY || jsonParser.currentToken() == JsonToken.START_OBJECT) {
+                    jsonParser.skipChildren();
+                }
+                result.put(name, value);
+            }
+        }
+        return result;
     }
 }

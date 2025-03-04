@@ -59,5 +59,9 @@ public class Main {
         Deserializer deserializer = new Deserializer();
 
         deserializer.index(Path.of("out.json"));
+        var res = deserializer.readObject(1);
+        System.out.println(res);
+        var res2 = deserializer.readObject(0);
+        System.out.println(res2);
     }
 }
