@@ -101,17 +101,4 @@ public class Serializer {
     private static boolean isPrimitive(Object value, Class<?> type) {
         return value == null || type.isPrimitive() || type.equals(String.class);
     }
-
-    /*
-    private static boolean isPrimitive(Class<?> type) {
-        return type.isPrimitive() || type.getName().equals(String.class.getName());
-    }
-    */
-
-    // TODO: handle getters/setters:
-                /*
-                writeQueue.add(value);
-                var newObjectId = currentObjectId + writeQueue.size();
-                System.out.printf("\t\"%s\": { \"__id__\": %s }", field.getName(), newObjectId);
-                */
 }
