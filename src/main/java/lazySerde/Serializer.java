@@ -14,11 +14,8 @@ import java.util.Deque;
 public class Serializer {
     private final ArrayDeque<Object> writeQueue = new ArrayDeque<>();
     private final ObjectManager manager = new ObjectManager();
-    private final Writer writer = new Writer(new FileOutputStream("out.json"));
+    private final Writer writer = new Writer();
     private int currentObjectId = -1;
-
-    public Serializer() throws IOException {
-    }
 
     private int getRedirectionId(Object value) {
         Integer newObjectId = manager.getId(value);
@@ -31,7 +28,8 @@ public class Serializer {
         return newObjectId;
     }
 
-    public void serialize(Object obj, String filename) {
+    public void serialize(Object obj, String filename) throws IOException {
+        writer.startFile(new FileOutputStream(filename));
         // So that we can safely continue out of everywhere
         // First object will be primary, other not primary.
         var isPrimary = true;

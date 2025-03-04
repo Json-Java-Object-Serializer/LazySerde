@@ -2,6 +2,7 @@ package lazySerde;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class Main {
@@ -52,8 +53,11 @@ public class Main {
         sample2.secondOne[0] = sample;
 
         Serializer serializer = new Serializer();
-        serializer.serialize(sample, "");
+        serializer.serialize(sample, "out.json");
         serializer.finish();
 
+        Deserializer deserializer = new Deserializer();
+
+        deserializer.index(Path.of("out.json"));
     }
 }

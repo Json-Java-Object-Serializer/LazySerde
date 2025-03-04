@@ -8,10 +8,9 @@ import java.io.OutputStream;
 
 public class Writer {
 
-    private final JsonGenerator jsonGenerator;
-    private final int indent = 4;
+    private JsonGenerator jsonGenerator;
 
-    public Writer(OutputStream output) throws IOException {
+    public void startFile(OutputStream output) throws IOException {
         // Create a JsonFactory and configure it for pretty printing
         JsonFactory jsonFactory = new JsonFactory();
         jsonGenerator = jsonFactory.createGenerator(output);
