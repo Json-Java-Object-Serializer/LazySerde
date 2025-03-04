@@ -13,8 +13,8 @@ public class Writer {
     }
 
     public Writer() {
-        System.out.print("{\n" + "    \"serialization\": [\n");
-        currentOffset += 2 * indent;
+        startNewObject();
+        startArrayField("serialization");
     }
 
     public void startNewObject() {
