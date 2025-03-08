@@ -44,7 +44,7 @@ public class Deserializer {
 
                 // Traverse the object to find the "@id" field
                 while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-                    if (jsonParser.currentToken() == JsonToken.START_ARRAY || jsonParser.currentToken() == JsonToken.START_ARRAY) {
+                    if (jsonParser.currentToken() == JsonToken.START_OBJECT || jsonParser.currentToken() == JsonToken.START_ARRAY) {
                         jsonParser.skipChildren();
                     } else if (jsonParser.currentToken() == JsonToken.FIELD_NAME && "@id".equals(jsonParser.currentName())) {
                         jsonParser.nextToken(); // Move to the value
@@ -74,7 +74,7 @@ public class Deserializer {
                 String name = jsonParser.currentName();
                 jsonParser.nextToken();
                 var value = switch (jsonParser.currentToken()) {
-                    case VALUE_NUMBER_INT -> jsonParser.getIntValue();
+                    case VALUE_NUMBER_INT -> jsonParser.getLongValue();
                     case VALUE_NUMBER_FLOAT -> jsonParser.getFloatValue();
                     case VALUE_TRUE -> true;
                     case VALUE_FALSE -> false;

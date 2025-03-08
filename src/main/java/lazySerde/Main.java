@@ -15,6 +15,9 @@ public class Main {
         sample.aha = 13.2;
         sample.sldkjfsldjf = 1123123;
         sample.woieur = 'c';
+        sample.list = new ArrayList<Integer>();
+        sample.list.add(5);
+        sample.list.add(3);
         sample.sndfmsdfh = "Simple String";
         sample.sndfmsdfh2 = "\"Complex\" String";
         sample.notHandled = new ArrayList<>();
@@ -59,9 +62,9 @@ public class Main {
         Deserializer deserializer = new Deserializer();
 
         deserializer.index(Path.of("out.json"));
-        var res = deserializer.readObject(1);
-        System.out.println(res);
-        var res2 = deserializer.readObject(0);
+        // var res = deserializer.readObject(1);
+        // System.out.println(res);
+        var res2 = deserializer.readObject(4);
         System.out.println(res2);
     }
 }
