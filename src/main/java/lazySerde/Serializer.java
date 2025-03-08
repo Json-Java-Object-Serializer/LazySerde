@@ -28,10 +28,11 @@ public class Serializer {
         return newObjectId;
     }
 
-    public void serialize(Object obj, String filename) throws IOException {
+    public Serializer(String filename) throws IOException {
         writer.startFile(new FileOutputStream(filename));
-        // So that we can safely continue out of everywhere
-        // First object will be primary, other not primary.
+    }
+
+    public void serialize(Object obj) {
         var isPrimary = true;
 
         writeQueue.add(obj);
@@ -43,9 +44,9 @@ public class Serializer {
 
             try {
                 writer.startNewObject();
+                writer.setMetaField("id", currentObjectId);
                 writer.setMetaField("primary", isPrimary);
                 writer.setMetaField("className", clazz.getName());
-                writer.setMetaField("id", currentObjectId);
                 manager.setId(currentObject, currentObjectId);
 
                 var fields = clazz.getDeclaredFields();
