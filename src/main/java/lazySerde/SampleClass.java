@@ -1,6 +1,7 @@
 package lazySerde;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class SampleClass {
     int value1;
@@ -15,6 +16,7 @@ public class SampleClass {
     String sndfmsdfh2;
     String nullish;
     ArrayList<Integer> notHandled;
+    List<Integer> list;
     int[] handled;
     String[] handledString;
     SampleClass[] secondOne;

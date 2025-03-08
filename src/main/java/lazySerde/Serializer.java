@@ -3,6 +3,9 @@ package lazySerde;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.StringEscapeUtils;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.ArrayDeque;
@@ -25,7 +28,8 @@ public class Serializer {
         return newObjectId;
     }
 
-    public void serialize(Object obj, String filename) {
+    public void serialize(Object obj, String filename) throws IOException {
+        writer.startFile(new FileOutputStream(filename));
         // So that we can safely continue out of everywhere
         // First object will be primary, other not primary.
         var isPrimary = true;
@@ -93,7 +97,7 @@ public class Serializer {
         }
     }
 
-    public void finish() {
+    public void finish() throws IOException {
         writer.finish();
     }
 
