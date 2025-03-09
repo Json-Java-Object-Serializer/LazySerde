@@ -1,15 +1,10 @@
 package lazySerde;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.text.StringEscapeUtils;
-
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.lang.reflect.Type;
+import java.lang.reflect.Modifier;
 import java.util.ArrayDeque;
-import java.util.Deque;
 
 public class Serializer {
     private final ArrayDeque<Object> writeQueue = new ArrayDeque<>();
@@ -44,15 +39,17 @@ public class Serializer {
 
             try {
                 writer.startNewObject();
+                writer.setMetaField("className", clazz.getName());
                 writer.setMetaField("id", currentObjectId);
                 writer.setMetaField("primary", isPrimary);
-                writer.setMetaField("className", clazz.getName());
                 manager.setId(currentObject, currentObjectId);
 
                 var fields = clazz.getDeclaredFields();
                 for (var field : fields) {
+                    if (Modifier.isStatic(field.getModifiers())) {
+                        continue;
+                    }
                     field.setAccessible(true);
-
                     // writer.setMetaField("type-" + field.getName(), field.getType().toString());
 
                     var value = field.get(currentObject);
@@ -71,15 +68,17 @@ public class Serializer {
                         writer.startArrayField(field.getName());
 
                         int length = Array.getLength(value);
-                        var elementType = type.getComponentType();
                         for (int i = 0; i < length; i++) {
                             var elementValue = Array.get(value, i);
-                            if (isPrimitive(elementValue, elementType)) {
+                            if (elementValue == null) {
+                                writer.addArrayPrimitive(elementValue);
+                            } else
+                            if (isPrimitive(elementValue, elementValue.getClass())) {
                                 writer.addArrayPrimitive(elementValue);
                             } else {
-                                 // if (elementValue.getClass().isInterface()) {
+                                if (elementValue.getClass().isInterface()) {
                                     writer.addSimpleRedirection(getRedirectionId(elementValue));
-                                 // }
+                                }
                             }
                         }
 
@@ -104,6 +103,8 @@ public class Serializer {
 
     // Return null if not primitive
     private static boolean isPrimitive(Object value, Class<?> type) {
-        return value == null || type.isPrimitive() || type.equals(String.class);
+        return value == null || type.isPrimitive() || type.equals(String.class) ||
+                type.equals(Integer.class) || type.equals(Short.class) || type.equals(Long.class) || type.equals(Byte.class)
+                || type.equals(Boolean.class) || type.equals(Character.class) || type.equals(Double.class) || type.equals(Float.class);
     }
 }

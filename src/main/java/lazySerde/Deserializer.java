@@ -3,6 +3,7 @@ package lazySerde;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import net.sf.cglib.proxy.Enhancer;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -15,6 +16,7 @@ import java.util.Map;
 public class Deserializer {
     private FileInputStream file;
     private Map<Integer, Long> offsets;
+    private Map<Integer, String> classNames;
     private List<Integer> primary_ids = new ArrayList<Integer>();
 
     public void index(Path filename) throws IOException {
@@ -30,6 +32,7 @@ public class Deserializer {
         JsonParser jsonParser = jsonFactory.createParser(file);
 
         offsets = new HashMap<>();
+        classNames = new HashMap<>();
 
         while (jsonParser.nextToken() != null) {
             if (jsonParser.currentToken() == JsonToken.FIELD_NAME && "serialization".equals(jsonParser.currentName())) {
@@ -45,18 +48,23 @@ public class Deserializer {
             if (jsonParser.currentToken() == JsonToken.START_OBJECT) {
                 long offset = jsonParser.currentTokenLocation().getByteOffset();
                 int id = -1;
+                String className = "";
 
                 // Traverse the object to find the "@id" field
                 while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
                     if (jsonParser.currentToken() == JsonToken.START_OBJECT || jsonParser.currentToken() == JsonToken.START_ARRAY) {
                         jsonParser.skipChildren();
-                    } else if (jsonParser.currentToken() == JsonToken.FIELD_NAME && "@id".equals(jsonParser.currentName())) {
+                    } else if (jsonParser.currentToken() == JsonToken.FIELD_NAME && "@className".equals(jsonParser.currentName())) {
+                        jsonParser.nextToken(); // Move to the value
+                        className = jsonParser.getValueAsString();
+                    } if (jsonParser.currentToken() == JsonToken.FIELD_NAME && "@id".equals(jsonParser.currentName())) {
                         jsonParser.nextToken(); // Move to the value
                         id = jsonParser.getIntValue();
                     } else if (jsonParser.currentToken() == JsonToken.FIELD_NAME && "@primary".equals(jsonParser.currentName())) {
                         jsonParser.nextToken();
                         if (jsonParser.getBooleanValue()) {
                             // ID have to go before primary!!!
+                            assert(id != -1);
                             primary_ids.add(id);
                         }
                     }
@@ -64,6 +72,7 @@ public class Deserializer {
 
                 if (id != -1) {
                     offsets.put(id, offset);
+                    classNames.put(id, className);
                 }
             }
         }
@@ -75,17 +84,30 @@ public class Deserializer {
         if (counter >= primary_ids.size()) {
             return null;
         }
-        return readObject(clazz, primary_ids.get(counter++));
-    }
+        int id = primary_ids.get(counter);
+        counter++;
 
-    private Object readObject(Class<?> clazz, int id) throws Exception {
         if (!offsets.containsKey(id)) {
             return null;
         }
+        if (!clazz.getName().equals(classNames.get(id))) {
+            throw new Exception("Asked class is wrong!");
+        }
+        return readObject(id);
+    }
 
-        Object result = clazz.newInstance();
+    public Object readObject(int id) throws Exception {
+        if (!offsets.containsKey(id) || !classNames.containsKey(id)) {
+            return null;
+        }
+        Class<?> clazz = Class.forName(classNames.get(id));
+        // TODO: think about not default constructors. Maybe just don't allow them by annotations
+        MyInterceptor interceptor = new MyInterceptor(this);
+        Object result_proxy = Enhancer.create(
+                clazz,
+                interceptor
+        );
 
-        // TODO: create proxy for class
         JsonFactory jsonFactory = new JsonFactory();
         file.getChannel().position(offsets.get(id));
         JsonParser jsonParser = jsonFactory.createParser(file);
@@ -101,28 +123,57 @@ public class Deserializer {
                 var field = clazz.getDeclaredField(name);
 
                 jsonParser.nextToken();
-                parseField(jsonParser, field, result);
-                if (jsonParser.currentToken() == JsonToken.START_ARRAY || jsonParser.currentToken() == JsonToken.START_OBJECT) {
+                if (parsePrimitiveField(jsonParser, field, result_proxy)) {
+                    continue;
+                }
+                if (jsonParser.currentToken() == JsonToken.START_OBJECT) {
+                    int redirection_id = parseRedirection(jsonParser);
+                    interceptor.setFieldRedirection(name, redirection_id);
+                    continue;
+                }
+
+                if (jsonParser.currentToken() == JsonToken.START_ARRAY) {
+                    // It can be array of primitive fields(nulls) or redirections
+                    // But not multitype
+                    // TODO:
                     jsonParser.skipChildren();
+                    continue;
                 }
             }
         }
 
-        return result;
+        return result_proxy;
     }
 
+    private int parseRedirection(JsonParser jsonParser) throws Exception {
+        jsonParser.nextToken();
+        if (jsonParser.currentToken() != JsonToken.FIELD_NAME || !jsonParser.currentName().equals("@redirect")) {
+            throw new Exception("Bad redirection format");
+        }
 
+        jsonParser.nextToken();
+        if (jsonParser.currentToken() != JsonToken.VALUE_NUMBER_INT) {
+            throw new Exception("Bad redirection format");
+        }
+        int id = jsonParser.getIntValue();
+        jsonParser.nextToken();
+        if (jsonParser.currentToken() != JsonToken.END_OBJECT) {
+            throw new Exception("Bad redirection format");
+        }
+        return id;
+    }
 
-    private void parseField(JsonParser jsonParser, Field field, Object result) throws Exception {
+    private boolean parsePrimitiveField(JsonParser jsonParser, Field field, Object result) throws Exception {
         String fieldType = field.getType().toString();
         field.setAccessible(true);
+
 
         switch (jsonParser.currentToken()) {
             case VALUE_NUMBER_INT: {
                 if ("int".equals(fieldType)) {
                     field.setInt(result, jsonParser.getIntValue());
                 } else if ("long".equals(fieldType)) {
-                    field.setLong(result, jsonParser.getIntValue());
+                    field.setLong(result, jsonParser.getLongValue());
                 } else if ("short".equals(fieldType)){
                     field.setShort(result, jsonParser.getShortValue());
                 } else if ("byte".equals(fieldType)) {
@@ -172,33 +223,18 @@ public class Deserializer {
                 }
                 break;
             }
-            case START_OBJECT: {
-                // "@NESTED OBJECT DETECTED";
-                break;
-            }
-            case START_ARRAY: {
-                //"@ARRAY DETECTED";
-
-                break;
-            }
-            case END_ARRAY: {
-                // throw new IOException();
-                break;
-            }
-
-
-            case NOT_AVAILABLE: {
+            case NOT_AVAILABLE, END_OBJECT, END_ARRAY, FIELD_NAME, VALUE_EMBEDDED_OBJECT: {
+                field.setAccessible(false);
                 throw new IOException();
             }
-            case END_OBJECT, FIELD_NAME: {
-                throw new IOException();
-            }
-            case VALUE_EMBEDDED_OBJECT: {
-                throw new IOException();
+            default: {
+                field.setAccessible(false);
+                return false;
             }
         }
 
         field.setAccessible(false);
+        return true;
     }
 
 }

@@ -55,6 +55,11 @@ public class Main {
         sample2.secondOne = new SampleClass[1];
         sample2.secondOne[0] = sample;
 
+        /*
+        VM options:
+        --add-opens java.base/java.util=ALL-UNNAMED
+        --add-opens java.base/java.lang=ALL-UNNAMED
+         */
         Serializer serializer = new Serializer("out.json");
         serializer.serialize(sample);
         serializer.serialize(sample2);
@@ -63,11 +68,9 @@ public class Main {
         Deserializer deserializer = new Deserializer();
         deserializer.index(Path.of("out.json"));
 
-        Object cur;
-        do {
-            cur = deserializer.getNext(SampleClass.class);
-            System.out.println(cur);
-        } while (cur != null);
+        Object cur = deserializer.getNext(SampleClass.class);
+        System.out.println("Object read");
+        System.out.println(cur);
 
     }
 }
