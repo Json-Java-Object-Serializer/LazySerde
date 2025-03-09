@@ -64,10 +64,18 @@ public class Serializer {
                         continue;
                     }
 
+                    // If array consist of wrappers of primitives it will contain extra info.
                     if (type.isArray()) {
-                        writer.startArrayField(field.getName());
-
                         int length = Array.getLength(value);
+                        // name@type metafield will have ONLY wrappers array.
+                        if (length > 0) {
+                            var elementValue = Array.get(value, 0);
+                            var tp = type.getComponentType();
+                            writer.startArrayField(field.getName(), tp.equals(Object.class) ? elementValue.getClass() : null, length);
+                        } else {
+                            writer.startArrayField(field.getName(), null, length);
+                        }
+
                         for (int i = 0; i < length; i++) {
                             var elementValue = Array.get(value, i);
                             if (elementValue == null) {

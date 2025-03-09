@@ -18,6 +18,8 @@ public class Main {
         sample.list = new ArrayList<Integer>();
         sample.list.add(5);
         sample.list.add(3);
+        sample.list.add(null);
+        sample.list.add(4);
         sample.sndfmsdfh = "Simple String";
         sample.sndfmsdfh2 = "\"Complex\" String";
         sample.notHandled = new ArrayList<>();

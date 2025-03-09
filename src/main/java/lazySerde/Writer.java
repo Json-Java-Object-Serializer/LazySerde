@@ -52,7 +52,14 @@ public class Writer {
         endObject(); // End the redirection object
     }
 
-    public void startArrayField(String fieldName) throws IOException {
+    public void startArrayField(String fieldName, Class<?> componentType, int length) throws IOException {
+        if (componentType != Object.class && componentType != null) {
+            // We will remember types of primitives arrays to support type erasure in generic collections.
+            jsonGenerator.writeFieldName(fieldName + "@type");
+            jsonGenerator.writeString(componentType.getTypeName());
+        }
+        jsonGenerator.writeFieldName(fieldName + "@length"); // Write field name
+        jsonGenerator.writeNumber(length); // Write number value
         jsonGenerator.writeFieldName(fieldName); // Write field name
         jsonGenerator.writeStartArray(); // Start a new array
     }

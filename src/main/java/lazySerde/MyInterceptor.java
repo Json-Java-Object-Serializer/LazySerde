@@ -43,7 +43,8 @@ public class MyInterceptor implements MethodInterceptor {
     }
 
 
-    public void setArrayRedirection() {
-        // todo
+    public void setArrayRedirection(String fieldName, Integer idx, Integer id) {
+        // TODO: ...
+
     }
 }

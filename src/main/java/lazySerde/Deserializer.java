@@ -5,7 +5,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import net.sf.cglib.proxy.Enhancer;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,6 +20,10 @@ public class Deserializer {
     private Map<Integer, Long> offsets;
     private Map<Integer, String> classNames;
     private List<Integer> primary_ids = new ArrayList<Integer>();
+    private int counter = 0;
+    private String lastName = "";
+    private Integer arrayLength = null;
+    private String arrayType = null;
 
     public void index(Path filename) throws IOException {
         file = new FileInputStream(String.valueOf(filename));
@@ -57,14 +63,15 @@ public class Deserializer {
                     } else if (jsonParser.currentToken() == JsonToken.FIELD_NAME && "@className".equals(jsonParser.currentName())) {
                         jsonParser.nextToken(); // Move to the value
                         className = jsonParser.getValueAsString();
-                    } if (jsonParser.currentToken() == JsonToken.FIELD_NAME && "@id".equals(jsonParser.currentName())) {
+                    }
+                    if (jsonParser.currentToken() == JsonToken.FIELD_NAME && "@id".equals(jsonParser.currentName())) {
                         jsonParser.nextToken(); // Move to the value
                         id = jsonParser.getIntValue();
                     } else if (jsonParser.currentToken() == JsonToken.FIELD_NAME && "@primary".equals(jsonParser.currentName())) {
                         jsonParser.nextToken();
                         if (jsonParser.getBooleanValue()) {
                             // ID have to go before primary!!!
-                            assert(id != -1);
+                            assert (id != -1);
                             primary_ids.add(id);
                         }
                     }
@@ -78,8 +85,6 @@ public class Deserializer {
         }
     }
 
-    // returns next primary object
-    private int counter = 0;
     public Object getNext(Class<?> clazz) throws Exception {
         if (counter >= primary_ids.size()) {
             return null;
@@ -96,7 +101,38 @@ public class Deserializer {
         return readObject(id);
     }
 
-    public Object readObject(int id) throws Exception {
+    //     Fills metafields and returns true if have to skip this row of JSON.
+    private boolean processMetaFields(JsonParser jsonParser, String name) throws IOException {
+        if (name.startsWith("@")) {
+            jsonParser.nextToken();
+            return true;
+        }
+        if (name.endsWith("@length")) {
+            if (!name.equals(lastName + "@length")) {
+                lastName = name.split("@")[0];
+                arrayType = null;
+            }
+            jsonParser.nextToken();
+            arrayLength = jsonParser.getIntValue();
+            return true;
+        }
+        if (name.endsWith("@type")) {
+            if (!name.equals(lastName + "@type")) {
+                lastName = name.split("@")[0];
+                arrayLength = null;
+            }
+            jsonParser.nextToken();
+            arrayType = jsonParser.getValueAsString();
+            return true;
+        }
+
+        return false;
+    }
+
+    protected Object readObject(int id) throws Exception {
+        lastName = "";
+        arrayLength = 0;
+        arrayType = "";
         if (!offsets.containsKey(id) || !classNames.containsKey(id)) {
             return null;
         }
@@ -114,30 +150,74 @@ public class Deserializer {
 
         while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
             if (jsonParser.currentToken() == JsonToken.FIELD_NAME) {
-
                 String name = jsonParser.currentName();
-                if (name.startsWith("@")) {
-                    jsonParser.nextToken();
-                    continue;
-                }
-                var field = clazz.getDeclaredField(name);
 
-                jsonParser.nextToken();
-                if (parsePrimitiveField(jsonParser, field, result_proxy)) {
+                if (processMetaFields(jsonParser, name)) {
                     continue;
                 }
+
+                var field = clazz.getDeclaredField(name);
+                jsonParser.nextToken();
+                if (parsePrimitive(jsonParser, field, result_proxy)) {
+                    continue;
+                }
+
+                /*     Parse simple redirection      */
                 if (jsonParser.currentToken() == JsonToken.START_OBJECT) {
                     int redirection_id = parseRedirection(jsonParser);
                     interceptor.setFieldRedirection(name, redirection_id);
                     continue;
                 }
 
+                /*    Parse array: primitive and redirections     */
                 if (jsonParser.currentToken() == JsonToken.START_ARRAY) {
-                    // It can be array of primitive fields(nulls) or redirections
-                    // But not multitype
-                    // TODO:
-                    jsonParser.skipChildren();
-                    continue;
+                    int idx = 0;
+                    boolean is_wrapper = false;
+                    boolean is_primitive = false;
+
+                    var type = field.getType();
+                    Object array = null;
+                    if (lastName.equals(name) && arrayType != null) {
+                        // Case when array type is primitive
+                        is_wrapper = true;
+                        array = Array.newInstance(type.getComponentType(), arrayLength);
+                        field.setAccessible(true);
+                        field.set(result_proxy, array);
+                    }
+                    if (!is_wrapper && type.getComponentType().isPrimitive() || type.getComponentType().equals(String.class)) {
+                        // Case when array type is primitive
+                        is_primitive = true;
+                        array = Array.newInstance(type.getComponentType(), arrayLength);
+                        field.setAccessible(true);
+                        field.set(result_proxy, array);
+                    }
+
+                    while (true) {
+                        jsonParser.nextToken();
+                        if (jsonParser.currentToken() == JsonToken.START_OBJECT) {
+                            if (is_primitive) {
+                                throw new Exception();
+                            }
+                            int redirection_id = parseRedirection(jsonParser);
+                            interceptor.setArrayRedirection(name, idx, redirection_id);
+                        } else if (jsonParser.currentToken() == JsonToken.END_ARRAY) {
+                            break;
+                        } else {
+                            if (is_primitive) {
+                                parseArrayPrimitive(jsonParser, type.getComponentType().toString(), array, idx);
+                            } else if (is_wrapper) {
+                                parseArrayWrapper(jsonParser, arrayType, array, idx);
+                            } else {
+                                throw new Exception();
+                            }
+
+                        }
+                        idx++;
+                    }
+
+                    if (is_primitive) {
+                        field.setAccessible(false);
+                    }
                 }
             }
         }
@@ -163,7 +243,7 @@ public class Deserializer {
         return id;
     }
 
-    private boolean parsePrimitiveField(JsonParser jsonParser, Field field, Object result) throws Exception {
+    private boolean parsePrimitive(JsonParser jsonParser, Field field, Object result) throws Exception {
         String fieldType = field.getType().toString();
         field.setAccessible(true);
 
@@ -174,7 +254,7 @@ public class Deserializer {
                     field.setInt(result, jsonParser.getIntValue());
                 } else if ("long".equals(fieldType)) {
                     field.setLong(result, jsonParser.getLongValue());
-                } else if ("short".equals(fieldType)){
+                } else if ("short".equals(fieldType)) {
                     field.setShort(result, jsonParser.getShortValue());
                 } else if ("byte".equals(fieldType)) {
                     field.setByte(result, jsonParser.getByteValue());
@@ -216,7 +296,7 @@ public class Deserializer {
             case VALUE_STRING: {
                 if ("class java.lang.String".equals(fieldType)) {
                     field.set(result, jsonParser.getValueAsString());
-                } else if ("char".equals(fieldType)){
+                } else if ("char".equals(fieldType)) {
                     field.set(result, jsonParser.getValueAsString().toCharArray()[0]);
                 } else {
                     throw new Exception("Unknown field type");
@@ -235,6 +315,130 @@ public class Deserializer {
 
         field.setAccessible(false);
         return true;
+    }
+
+    private void parseArrayWrapper(JsonParser jsonParser, String fieldType, Object array, int idx) throws Exception {
+        switch (jsonParser.currentToken()) {
+            case VALUE_NUMBER_INT: {
+                if ("java.lang.Integer".equals(fieldType)) {
+                    Array.set(array, idx, jsonParser.getIntValue());
+                } else if ("java.lang.Long".equals(fieldType)) {
+                    Array.set(array, idx, jsonParser.getLongValue());
+                } else if ("java.lang.Short".equals(fieldType)) {
+                    Array.set(array, idx, jsonParser.getShortValue());
+                } else if ("java.lang.Byte".equals(fieldType)) {
+                    Array.set(array, idx, jsonParser.getByteValue());
+                } else {
+                    throw new Exception("Unknown field Type");
+                }
+                break;
+            }
+            case VALUE_NUMBER_FLOAT: {
+                if ("java.lang.Float".equals(fieldType)) {
+                    Array.set(array, idx, jsonParser.getFloatValue());
+                } else if ("java.lang.Double".equals(fieldType)) {
+                    Array.set(array, idx, jsonParser.getDoubleValue());
+                } else {
+                    throw new Exception("Unknown field Type");
+                }
+                break;
+            }
+            case VALUE_TRUE: {
+                if ("java.lang.Boolean".equals(fieldType)) {
+                    Array.set(array, idx, true);
+                } else {
+                    throw new Exception("Unknown field Type");
+                }
+                break;
+            }
+            case VALUE_FALSE: {
+                if ("java.lang.Boolean".equals(fieldType)) {
+                    Array.set(array, idx, false);
+                } else {
+                    throw new Exception("Unknown field Type");
+                }
+                break;
+            }
+            case VALUE_NULL: {
+                Array.set(array, idx, null);
+                break;
+            }
+            case VALUE_STRING: {
+                if ("java.lang.String".equals(fieldType)) {
+                    Array.set(array, idx, jsonParser.getValueAsString());
+                } else if ("java.lang.Character".equals(fieldType)) {
+                    Array.set(array, idx, jsonParser.getValueAsString().toCharArray()[0]);
+                } else {
+                    throw new Exception("Unknown field type");
+                }
+                break;
+            }
+            default: {
+                throw new IOException();
+            }
+        }
+    }
+
+    private void parseArrayPrimitive(JsonParser jsonParser, String fieldType, Object array, int idx) throws Exception {
+        switch (jsonParser.currentToken()) {
+            case VALUE_NUMBER_INT: {
+                if ("int".equals(fieldType)) {
+                    Array.setInt(array, idx, jsonParser.getIntValue());
+                } else if ("long".equals(fieldType)) {
+                    Array.setLong(array, idx, jsonParser.getLongValue());
+                } else if ("short".equals(fieldType)) {
+                    Array.setShort(array, idx, jsonParser.getShortValue());
+                } else if ("byte".equals(fieldType)) {
+                    Array.setByte(array, idx, jsonParser.getByteValue());
+                } else {
+                    throw new Exception("Unknown field Type");
+                }
+                break;
+            }
+            case VALUE_NUMBER_FLOAT: {
+                if ("float".equals(fieldType)) {
+                    Array.setFloat(array, idx, jsonParser.getFloatValue());
+                } else if ("double".equals(fieldType)) {
+                    Array.setDouble(array, idx, jsonParser.getDoubleValue());
+                } else {
+                    throw new Exception("Unknown field Type");
+                }
+                break;
+            }
+            case VALUE_TRUE: {
+                if ("boolean".equals(fieldType)) {
+                    Array.setBoolean(array, idx, true);
+                } else {
+                    throw new Exception("Unknown field Type");
+                }
+                break;
+            }
+            case VALUE_FALSE: {
+                if ("boolean".equals(fieldType)) {
+                    Array.setBoolean(array, idx, false);
+                } else {
+                    throw new Exception("Unknown field Type");
+                }
+                break;
+            }
+            case VALUE_NULL: {
+                Array.set(array, idx, null);
+                break;
+            }
+            case VALUE_STRING: {
+                if ("class java.lang.String".equals(fieldType)) {
+                    Array.set(array, idx, jsonParser.getValueAsString());
+                } else if ("char".equals(fieldType)) {
+                    Array.set(array, idx, jsonParser.getValueAsString().toCharArray()[0]);
+                } else {
+                    throw new Exception("Unknown field type");
+                }
+                break;
+            }
+            default: {
+                throw new IOException();
+            }
+        }
     }
 
 }
