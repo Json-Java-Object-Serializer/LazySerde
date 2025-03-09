@@ -1,8 +1,8 @@
 {
   "serialization" : [ {
-    "@primary" : true,
     "@className" : "lazySerde.SampleClass",
     "@id" : 0,
+    "@primary" : true,
     "value1" : -1,
     "value2" : 15.0,
     "aha" : 13.2,
@@ -14,32 +14,27 @@
     "sndfmsdfh" : "Simple String",
     "sndfmsdfh2" : "\"Complex\" String",
     "nullish" : null,
+    "handled@length" : 5,
+    "handled" : [ 0, 8, 16, 24, 32 ],
     "list" : {
       "@redirect" : 1
     },
-    "handled" : [ 0, 8, 16, 24, 32 ],
+    "handledString@length" : 3,
     "handledString" : [ "wow", "\"that", "actually works\"" ],
-    "secondOne" : [ {
-      "@redirect" : 2
-    } ]
+    "secondOne@length" : 1,
+    "secondOne" : [ ]
   }, {
-    "@primary" : false,
     "@className" : "java.util.ArrayList",
     "@id" : 1,
-    "serialVersionUID" : 8683452581122892189,
-    "DEFAULT_CAPACITY" : 10,
-    "EMPTY_ELEMENTDATA" : [ ],
-    "DEFAULTCAPACITY_EMPTY_ELEMENTDATA" : [ ],
-    "elementData" : [ {
-      "@redirect" : 3
-    }, {
-      "@redirect" : 4
-    }, null, null, null, null, null, null, null, null ],
-    "size" : 2
-  }, {
     "@primary" : false,
+    "elementData@type" : "java.lang.Integer",
+    "elementData@length" : 10,
+    "elementData" : [ 5, 3, null, 4, null, null, null, null, null, null ],
+    "size" : 4
+  }, {
     "@className" : "lazySerde.SampleClass",
     "@id" : 2,
+    "@primary" : true,
     "value1" : 1,
     "value2" : 19.0,
     "aha" : 13.0,
@@ -51,39 +46,12 @@
     "sndfmsdfh" : "Sile String",
     "sndfmsdfh2" : "omplex\" String",
     "nullish" : null,
-    "list" : null,
+    "handled@length" : 5,
     "handled" : [ 0, 2, 4, 6, 8 ],
+    "list" : null,
+    "handledString@length" : 3,
     "handledString" : [ "WoW", "\"HHHHH", "slkjfslkdjfklsdjfklsdj" ],
-    "secondOne" : [ {
-      "@redirect" : 0
-    } ]
-  }, {
-    "@primary" : false,
-    "@className" : "java.lang.Integer",
-    "@id" : 3,
-    "MIN_VALUE" : -2147483648,
-    "MAX_VALUE" : 2147483647,
-    "digits" : [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z" ],
-    "DigitTens" : [ 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57 ],
-    "DigitOnes" : [ 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57 ],
-    "sizeTable" : [ 9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999, 2147483647 ],
-    "value" : 5,
-    "SIZE" : 32,
-    "BYTES" : 4,
-    "serialVersionUID" : 1360826667806852920
-  }, {
-    "@primary" : false,
-    "@className" : "java.lang.Integer",
-    "@id" : 4,
-    "MIN_VALUE" : -2147483648,
-    "MAX_VALUE" : 2147483647,
-    "digits" : [ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z" ],
-    "DigitTens" : [ 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 49, 49, 49, 49, 49, 49, 49, 49, 49, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57 ],
-    "DigitOnes" : [ 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57 ],
-    "sizeTable" : [ 9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999, 2147483647 ],
-    "value" : 3,
-    "SIZE" : 32,
-    "BYTES" : 4,
-    "serialVersionUID" : 1360826667806852920
+    "secondOne@length" : 1,
+    "secondOne" : [ ]
   } ]
 }

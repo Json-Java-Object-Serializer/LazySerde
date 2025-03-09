@@ -15,9 +15,9 @@ public class SampleClass {
     String sndfmsdfh;
     String sndfmsdfh2;
     String nullish;
+    int[] handled;
     ArrayList<Integer> notHandled;
     List<Integer> list;
-    int[] handled;
     String[] handledString;
     SampleClass[] secondOne;
 }

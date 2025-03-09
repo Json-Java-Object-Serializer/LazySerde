@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         var sample = new SampleClass();
         sample.io2wur = 2;
         sample.mnn = 1;
@@ -18,6 +18,8 @@ public class Main {
         sample.list = new ArrayList<Integer>();
         sample.list.add(5);
         sample.list.add(3);
+        sample.list.add(null);
+        sample.list.add(4);
         sample.sndfmsdfh = "Simple String";
         sample.sndfmsdfh2 = "\"Complex\" String";
         sample.notHandled = new ArrayList<>();
@@ -55,16 +57,22 @@ public class Main {
         sample2.secondOne = new SampleClass[1];
         sample2.secondOne[0] = sample;
 
-        Serializer serializer = new Serializer();
-        serializer.serialize(sample, "out.json");
+        /*
+        VM options:
+        --add-opens java.base/java.util=ALL-UNNAMED
+        --add-opens java.base/java.lang=ALL-UNNAMED
+         */
+        Serializer serializer = new Serializer("out.json");
+        serializer.serialize(sample);
+        serializer.serialize(sample2);
         serializer.finish();
 
         Deserializer deserializer = new Deserializer();
-
         deserializer.index(Path.of("out.json"));
-        // var res = deserializer.readObject(1);
-        // System.out.println(res);
-        var res2 = deserializer.readObject(4);
-        System.out.println(res2);
+
+        Object cur = deserializer.getNext(SampleClass.class);
+        System.out.println("Object read");
+        System.out.println(cur);
+
     }
 }

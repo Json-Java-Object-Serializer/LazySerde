@@ -18,6 +18,7 @@ dependencies {
     implementation("org.apache.commons:commons-text:1.13.0")
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
     implementation("com.fasterxml.jackson.core:jackson-core:2.18.3")
+    implementation("cglib:cglib:3.3.0") // CGLIB dependency
 }
 
 tasks.test {
