@@ -204,9 +204,9 @@ public class Deserializer {
                             break;
                         } else {
                             if (is_primitive) {
-                                parseArrayPrimitive(jsonParser, type.getComponentType().toString(), array, idx);
+                                parseArrayPW(jsonParser, type.getComponentType().toString(), array, idx);
                             } else if (is_wrapper) {
-                                parseArrayWrapper(jsonParser, arrayType, array, idx);
+                                parseArrayPW(jsonParser, arrayType, array, idx);
                             } else {
                                 throw new Exception();
                             }
@@ -317,16 +317,16 @@ public class Deserializer {
         return true;
     }
 
-    private void parseArrayWrapper(JsonParser jsonParser, String fieldType, Object array, int idx) throws Exception {
+    private void parseArrayPW(JsonParser jsonParser, String fieldType, Object array, int idx) throws Exception {
         switch (jsonParser.currentToken()) {
             case VALUE_NUMBER_INT: {
-                if ("java.lang.Integer".equals(fieldType)) {
+                if ("java.lang.Integer".equals(fieldType) || "int".equals(fieldType)) {
                     Array.set(array, idx, jsonParser.getIntValue());
-                } else if ("java.lang.Long".equals(fieldType)) {
+                } else if ("java.lang.Long".equals(fieldType) || "long".equals(fieldType)) {
                     Array.set(array, idx, jsonParser.getLongValue());
-                } else if ("java.lang.Short".equals(fieldType)) {
+                } else if ("java.lang.Short".equals(fieldType) || "short".equals(fieldType)) {
                     Array.set(array, idx, jsonParser.getShortValue());
-                } else if ("java.lang.Byte".equals(fieldType)) {
+                } else if ("java.lang.Byte".equals(fieldType) || "byte".equals(fieldType)) {
                     Array.set(array, idx, jsonParser.getByteValue());
                 } else {
                     throw new Exception("Unknown field Type");
@@ -334,9 +334,9 @@ public class Deserializer {
                 break;
             }
             case VALUE_NUMBER_FLOAT: {
-                if ("java.lang.Float".equals(fieldType)) {
+                if ("java.lang.Float".equals(fieldType) || "float".equals(fieldType)) {
                     Array.set(array, idx, jsonParser.getFloatValue());
-                } else if ("java.lang.Double".equals(fieldType)) {
+                } else if ("java.lang.Double".equals(fieldType) || "double".equals(fieldType)) {
                     Array.set(array, idx, jsonParser.getDoubleValue());
                 } else {
                     throw new Exception("Unknown field Type");
@@ -344,7 +344,7 @@ public class Deserializer {
                 break;
             }
             case VALUE_TRUE: {
-                if ("java.lang.Boolean".equals(fieldType)) {
+                if ("java.lang.Boolean".equals(fieldType) || "boolean".equals(fieldType)) {
                     Array.set(array, idx, true);
                 } else {
                     throw new Exception("Unknown field Type");
@@ -352,7 +352,7 @@ public class Deserializer {
                 break;
             }
             case VALUE_FALSE: {
-                if ("java.lang.Boolean".equals(fieldType)) {
+                if ("java.lang.Boolean".equals(fieldType) || "boolean".equals(fieldType)) {
                     Array.set(array, idx, false);
                 } else {
                     throw new Exception("Unknown field Type");
@@ -364,9 +364,9 @@ public class Deserializer {
                 break;
             }
             case VALUE_STRING: {
-                if ("java.lang.String".equals(fieldType)) {
+                if ("java.lang.String".equals(fieldType) || "class java.lang.String".equals(fieldType)) {
                     Array.set(array, idx, jsonParser.getValueAsString());
-                } else if ("java.lang.Character".equals(fieldType)) {
+                } else if ("java.lang.Character".equals(fieldType) || "char".equals(fieldType)) {
                     Array.set(array, idx, jsonParser.getValueAsString().toCharArray()[0]);
                 } else {
                     throw new Exception("Unknown field type");
@@ -379,66 +379,66 @@ public class Deserializer {
         }
     }
 
-    private void parseArrayPrimitive(JsonParser jsonParser, String fieldType, Object array, int idx) throws Exception {
-        switch (jsonParser.currentToken()) {
-            case VALUE_NUMBER_INT: {
-                if ("int".equals(fieldType)) {
-                    Array.setInt(array, idx, jsonParser.getIntValue());
-                } else if ("long".equals(fieldType)) {
-                    Array.setLong(array, idx, jsonParser.getLongValue());
-                } else if ("short".equals(fieldType)) {
-                    Array.setShort(array, idx, jsonParser.getShortValue());
-                } else if ("byte".equals(fieldType)) {
-                    Array.setByte(array, idx, jsonParser.getByteValue());
-                } else {
-                    throw new Exception("Unknown field Type");
-                }
-                break;
-            }
-            case VALUE_NUMBER_FLOAT: {
-                if ("float".equals(fieldType)) {
-                    Array.setFloat(array, idx, jsonParser.getFloatValue());
-                } else if ("double".equals(fieldType)) {
-                    Array.setDouble(array, idx, jsonParser.getDoubleValue());
-                } else {
-                    throw new Exception("Unknown field Type");
-                }
-                break;
-            }
-            case VALUE_TRUE: {
-                if ("boolean".equals(fieldType)) {
-                    Array.setBoolean(array, idx, true);
-                } else {
-                    throw new Exception("Unknown field Type");
-                }
-                break;
-            }
-            case VALUE_FALSE: {
-                if ("boolean".equals(fieldType)) {
-                    Array.setBoolean(array, idx, false);
-                } else {
-                    throw new Exception("Unknown field Type");
-                }
-                break;
-            }
-            case VALUE_NULL: {
-                Array.set(array, idx, null);
-                break;
-            }
-            case VALUE_STRING: {
-                if ("class java.lang.String".equals(fieldType)) {
-                    Array.set(array, idx, jsonParser.getValueAsString());
-                } else if ("char".equals(fieldType)) {
-                    Array.set(array, idx, jsonParser.getValueAsString().toCharArray()[0]);
-                } else {
-                    throw new Exception("Unknown field type");
-                }
-                break;
-            }
-            default: {
-                throw new IOException();
-            }
-        }
-    }
+//    private void parseArrayPrimitive(JsonParser jsonParser, String fieldType, Object array, int idx) throws Exception {
+//        switch (jsonParser.currentToken()) {
+//            case VALUE_NUMBER_INT: {
+//                if ("int".equals(fieldType)) {
+//                    Array.setInt(array, idx, jsonParser.getIntValue());
+//                } else if ("long".equals(fieldType)) {
+//                    Array.setLong(array, idx, jsonParser.getLongValue());
+//                } else if ("short".equals(fieldType)) {
+//                    Array.setShort(array, idx, jsonParser.getShortValue());
+//                } else if ("byte".equals(fieldType)) {
+//                    Array.setByte(array, idx, jsonParser.getByteValue());
+//                } else {
+//                    throw new Exception("Unknown field Type");
+//                }
+//                break;
+//            }
+//            case VALUE_NUMBER_FLOAT: {
+//                if ("float".equals(fieldType)) {
+//                    Array.setFloat(array, idx, jsonParser.getFloatValue());
+//                } else if ("double".equals(fieldType)) {
+//                    Array.setDouble(array, idx, jsonParser.getDoubleValue());
+//                } else {
+//                    throw new Exception("Unknown field Type");
+//                }
+//                break;
+//            }
+//            case VALUE_TRUE: {
+//                if ("boolean".equals(fieldType)) {
+//                    Array.setBoolean(array, idx, true);
+//                } else {
+//                    throw new Exception("Unknown field Type");
+//                }
+//                break;
+//            }
+//            case VALUE_FALSE: {
+//                if ("boolean".equals(fieldType)) {
+//                    Array.setBoolean(array, idx, false);
+//                } else {
+//                    throw new Exception("Unknown field Type");
+//                }
+//                break;
+//            }
+//            case VALUE_NULL: {
+//                Array.set(array, idx, null);
+//                break;
+//            }
+//            case VALUE_STRING: {
+//                if ("class java.lang.String".equals(fieldType)) {
+//                    Array.set(array, idx, jsonParser.getValueAsString());
+//                } else if ("char".equals(fieldType)) {
+//                    Array.set(array, idx, jsonParser.getValueAsString().toCharArray()[0]);
+//                } else {
+//                    throw new Exception("Unknown field type");
+//                }
+//                break;
+//            }
+//            default: {
+//                throw new IOException();
+//            }
+//        }
+//    }
 
 }
