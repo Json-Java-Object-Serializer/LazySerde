@@ -1,15 +1,10 @@
 package lazySerde;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.text.StringEscapeUtils;
-
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.lang.reflect.Type;
+import java.lang.reflect.Modifier;
 import java.util.ArrayDeque;
-import java.util.Deque;
 
 public class Serializer {
     private final ArrayDeque<Object> writeQueue = new ArrayDeque<>();
@@ -28,10 +23,11 @@ public class Serializer {
         return newObjectId;
     }
 
-    public void serialize(Object obj, String filename) throws IOException {
+    public Serializer(String filename) throws IOException {
         writer.startFile(new FileOutputStream(filename));
-        // So that we can safely continue out of everywhere
-        // First object will be primary, other not primary.
+    }
+
+    public void serialize(Object obj) {
         var isPrimary = true;
 
         writeQueue.add(obj);
@@ -43,15 +39,17 @@ public class Serializer {
 
             try {
                 writer.startNewObject();
-                writer.setMetaField("primary", isPrimary);
                 writer.setMetaField("className", clazz.getName());
                 writer.setMetaField("id", currentObjectId);
+                writer.setMetaField("primary", isPrimary);
                 manager.setId(currentObject, currentObjectId);
 
                 var fields = clazz.getDeclaredFields();
                 for (var field : fields) {
+                    if (Modifier.isStatic(field.getModifiers())) {
+                        continue;
+                    }
                     field.setAccessible(true);
-
                     // writer.setMetaField("type-" + field.getName(), field.getType().toString());
 
                     var value = field.get(currentObject);
@@ -66,19 +64,29 @@ public class Serializer {
                         continue;
                     }
 
+                    // If array consist of wrappers of primitives it will contain extra info.
                     if (type.isArray()) {
-                        writer.startArrayField(field.getName());
-
                         int length = Array.getLength(value);
-                        var elementType = type.getComponentType();
+                        // name@type metafield will have ONLY wrappers array.
+                        if (length > 0) {
+                            var elementValue = Array.get(value, 0);
+                            var tp = type.getComponentType();
+                            writer.startArrayField(field.getName(), tp.equals(Object.class) ? elementValue.getClass() : null, length);
+                        } else {
+                            writer.startArrayField(field.getName(), null, length);
+                        }
+
                         for (int i = 0; i < length; i++) {
                             var elementValue = Array.get(value, i);
-                            if (isPrimitive(elementValue, elementType)) {
+                            if (elementValue == null) {
+                                writer.addArrayPrimitive(elementValue);
+                            } else
+                            if (isPrimitive(elementValue, elementValue.getClass())) {
                                 writer.addArrayPrimitive(elementValue);
                             } else {
-                                 // if (elementValue.getClass().isInterface()) {
+                                if (elementValue.getClass().isInterface()) {
                                     writer.addSimpleRedirection(getRedirectionId(elementValue));
-                                 // }
+                                }
                             }
                         }
 
@@ -103,6 +111,8 @@ public class Serializer {
 
     // Return null if not primitive
     private static boolean isPrimitive(Object value, Class<?> type) {
-        return value == null || type.isPrimitive() || type.equals(String.class);
+        return value == null || type.isPrimitive() || type.equals(String.class) ||
+                type.equals(Integer.class) || type.equals(Short.class) || type.equals(Long.class) || type.equals(Byte.class)
+                || type.equals(Boolean.class) || type.equals(Character.class) || type.equals(Double.class) || type.equals(Float.class);
     }
 }
