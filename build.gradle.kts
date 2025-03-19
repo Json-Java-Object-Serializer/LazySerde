@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("application")
 }
 
 group = "gcla"
@@ -7,6 +8,11 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+}
+
+application {
+    mainClass = "lazySerde.Main"
+    applicationDefaultJvmArgs = listOf("--add-opens", "java.base/java.util=ALL-UNNAMED", "--add-opens", "java.base/java.lang=ALL-UNNAMED")
 }
 
 dependencies {
