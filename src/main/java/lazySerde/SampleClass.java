@@ -15,7 +15,8 @@ public class SampleClass {
     String sndfmsdfh;
     String sndfmsdfh2;
     String nullish;
-    int[] handled;
+    Integer primitiveWrapper;
+    Integer[] handled;
     ArrayList<Integer> notHandled;
     List<Integer> list;
     String[] handledString;
