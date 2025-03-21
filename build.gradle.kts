@@ -25,6 +25,8 @@ dependencies {
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
     implementation("com.fasterxml.jackson.core:jackson-core:2.18.3")
     implementation("cglib:cglib:3.3.0") // CGLIB dependency
+    // https://mvnrepository.com/artifact/org.objenesis/objenesis
+    implementation("org.objenesis:objenesis:3.4")
 }
 
 tasks.test {

@@ -6,15 +6,17 @@ import net.sf.cglib.proxy.MethodProxy;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 public class MyInterceptor implements MethodInterceptor {
 
     private final Deserializer deserializer;
-    private final HashMap<String, Integer> redirections = new HashMap<>();
+    private final Map<Object, Map<String, Integer>> redirections;
     private boolean loaded = false;
 
     MyInterceptor(Deserializer deserializer) {
+        redirections = new IdentityHashMap<>();
         this.deserializer = deserializer;
     }
 
@@ -29,7 +31,8 @@ public class MyInterceptor implements MethodInterceptor {
     }
 
     private void loadObject(Object obj) throws Exception {
-        for (Map.Entry<String, Integer> entry : redirections.entrySet()) {
+        var objRedirections = redirections.get(obj);
+        for (var entry : objRedirections.entrySet()) {
             Field field = obj.getClass().getSuperclass().getDeclaredField(entry.getKey());
 
             field.setAccessible(true);
@@ -38,8 +41,18 @@ public class MyInterceptor implements MethodInterceptor {
         }
     }
 
-    public void setFieldRedirection(String fieldName, Integer id) {
-        redirections.put(fieldName, id);
+    public void setFieldRedirection(Object obj, String fieldName, Integer id) {
+        if (!redirections.containsKey(obj)) {
+            redirections.put(obj, new HashMap<>());
+        }
+        redirections.get(obj).put(fieldName, id);
+    }
+
+    public void setField(Object obj, String fieldName, Integer id) throws Exception {
+        Field field = obj.getClass().getSuperclass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(obj, deserializer.readObject(id, false));
+        field.setAccessible(false);
     }
 
 

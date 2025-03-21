@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -15,6 +16,7 @@ public class Main {
         sample.aha = 13.2;
         sample.sldkjfsldjf = 1123123;
         sample.woieur = 'c';
+        sample.primitiveWrapper = -123;
         sample.list = new ArrayList<Integer>();
         sample.list.add(5);
         sample.list.add(3);
@@ -23,7 +25,7 @@ public class Main {
         sample.sndfmsdfh = "Simple String";
         sample.sndfmsdfh2 = "\"Complex\" String";
         sample.notHandled = new ArrayList<>();
-        sample.handled = new int[5];
+        sample.handled = new Integer[5];
         for (int i = 0; i < sample.handled.length; i++) {
             sample.handled[i] = 8 * i;
         }
@@ -40,10 +42,11 @@ public class Main {
         sample2.aha = 13.0;
         sample2.sldkjfsldjf = 1123;
         sample2.woieur = 'i';
+        sample2.primitiveWrapper = 19;
         sample2.sndfmsdfh = "Sile String";
         sample2.sndfmsdfh2 = "omplex\" String";
         sample2.notHandled = new ArrayList<>();
-        sample2.handled = new int[5];
+        sample2.handled = new Integer[5];
         for (int i = 0; i < sample2.handled.length; i++) {
             sample2.handled[i] = 2 * i;
         }
@@ -70,9 +73,9 @@ public class Main {
         Deserializer deserializer = new Deserializer();
         deserializer.index(Path.of("out.json"));
 
-        Object cur = deserializer.getNext(SampleClass.class);
+        SampleClass cur = (SampleClass)deserializer.getNext(SampleClass.class);
         System.out.println("Object read");
-        System.out.println(cur);
-
+        System.out.println(cur.primitiveWrapper);
+        System.out.println(Arrays.toString(cur.handled));
     }
 }
