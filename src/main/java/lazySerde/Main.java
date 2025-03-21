@@ -17,7 +17,7 @@ public class Main {
         sample.sldkjfsldjf = 1123123;
         sample.woieur = 'c';
         sample.primitiveWrapper = -123;
-        sample.list = new ArrayList<Integer>();
+        sample.list = new ArrayList<>();
         sample.list.add(5);
         sample.list.add(3);
         sample.list.add(null);
@@ -77,5 +77,6 @@ public class Main {
         System.out.println("Object read");
         System.out.println(cur.primitiveWrapper);
         System.out.println(Arrays.toString(cur.handled));
+        System.out.println(cur.list.get(0));
     }
 }

@@ -5,10 +5,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import net.sf.cglib.proxy.Enhancer;
 import org.objenesis.Objenesis;
-import org.objenesis.ObjenesisSerializer;
 import org.objenesis.ObjenesisStd;
 import org.objenesis.instantiator.ObjectInstantiator;
-import org.objenesis.instantiator.annotations.Instantiator;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -107,7 +105,7 @@ public class Deserializer {
         if (!clazz.getName().equals(classNames.get(id))) {
             throw new Exception("Asked class is wrong!");
         }
-        return readObject(id);
+        return readObject(id, false);
     }
 
     //     Fills metafields and returns true if have to skip this row of JSON.
@@ -135,11 +133,16 @@ public class Deserializer {
 
         return false;
     }
-    protected Object readObject(int id) throws Exception {
-        return readObject(id, true);
-    }
 
+    /**
+     *
+     * @param id internal id of the object
+     * @param isLazy whether to omit fields that can be loaded later
+     * @return Can return null if loading was not successful
+     * @throws Exception
+     */
     protected Object readObject(int id, boolean isLazy) throws Exception {
+        System.out.println("Reading object with id = " + id);
         if (loadedObjects.containsKey(id)) {
             return loadedObjects.get(id);
         }
@@ -159,7 +162,6 @@ public class Deserializer {
             var instantiator = instantiators.get(clazz);
             try {
                 result = instantiator.newInstance();
-                System.out.println("Successfully instantiated object " + clazz.getName() + " with objenesis!");
             } catch (Exception e1) {
                 try {
                     result = clazz.getDeclaredConstructor().newInstance();
@@ -169,6 +171,8 @@ public class Deserializer {
                 }
             }
         }
+
+        loadedObjects.put(id, result);
 
         JsonFactory jsonFactory = new JsonFactory();
         file.getChannel().position(offsets.get(id));
@@ -191,7 +195,7 @@ public class Deserializer {
                 /*     Parse simple redirection      */
                 if (jsonParser.currentToken() == JsonToken.START_OBJECT) {
                     int redirection_id = parseRedirection(jsonParser);
-                    if (isLazy && field.getType().isInterface()) {
+                    if (isLazy) {
                         interceptor.setFieldRedirection(result, name, redirection_id);
                     } else {
                         interceptor.setField(result, name, redirection_id);
@@ -199,21 +203,26 @@ public class Deserializer {
                     continue;
                 }
 
-                /*    Parse array: primitive and redirections     */
+                /*    Parse array     */
                 if (jsonParser.currentToken() == JsonToken.START_ARRAY) {
                     int idx = 0;
 
                     var type = field.getType();
                     Object array = null;
 
-                    array = Array.newInstance(type.getComponentType(), arrayLength);
+                    var componentType = type.getComponentType();
+                    array = Array.newInstance(componentType, arrayLength);
                     field.setAccessible(true);
                     field.set(result, array);
 
                     while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
                         if (jsonParser.currentToken() == JsonToken.START_OBJECT) {
                             int redirection_id = parseRedirection(jsonParser);
-                            interceptor.setArrayRedirection(name, idx, redirection_id);
+                            if (isLazy) {
+                                interceptor.setArrayRedirection(result, name, idx, redirection_id);
+                            } else {
+                                interceptor.setArrayItem(result, name, idx, redirection_id);
+                            }
                         } else {
                             parseArrayPW(jsonParser, type.getComponentType().toString(), array, idx);
                         }
@@ -224,8 +233,6 @@ public class Deserializer {
                 }
             }
         }
-
-        loadedObjects.put(id, result);
         return result;
     }
 
