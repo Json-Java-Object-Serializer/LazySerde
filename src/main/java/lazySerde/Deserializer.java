@@ -211,9 +211,15 @@ public class Deserializer {
                     Object array = null;
 
                     var componentType = type.getComponentType();
-                    array = Array.newInstance(componentType, arrayLength);
-                    field.setAccessible(true);
-                    field.set(result, array);
+                    // TODO: lazy deserialize arrays of primitives
+                    if (!isLazy || componentType.isPrimitive() || componentType.equals(String.class)) {
+                        array = Array.newInstance(componentType, arrayLength);
+                        field.setAccessible(true);
+                        field.set(result, array);
+                    } else {
+                        // Defer array creating until it is actually loaded
+                        interceptor.setArraySize(result, name, arrayLength);
+                    }
 
                     while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
                         if (jsonParser.currentToken() == JsonToken.START_OBJECT) {
@@ -223,7 +229,7 @@ public class Deserializer {
                             } else {
                                 interceptor.setArrayItem(result, name, idx, redirection_id);
                             }
-                        } else {
+                        } else if (jsonParser.currentToken() != JsonToken.VALUE_NULL) {
                             parseArrayPW(jsonParser, type.getComponentType().toString(), array, idx);
                         }
                         idx++;

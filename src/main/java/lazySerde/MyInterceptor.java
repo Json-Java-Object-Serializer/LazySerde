@@ -9,15 +9,17 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 public class MyInterceptor implements MethodInterceptor {
+    private record ArrayData(int length, List<Integer> redirections) {
+    }
 
     private final Deserializer deserializer;
     private final Map<Object, Map<String, Integer>> redirections;
-    private final Map<Object, Map<String, List<Integer>>> arrayRedirections;
+    private final Map<Object, Map<String, ArrayData>> arrayData;
     private boolean loaded = false;
 
     MyInterceptor(Deserializer deserializer) {
         redirections = new IdentityHashMap<>();
-        arrayRedirections = new IdentityHashMap<>();
+        arrayData = new IdentityHashMap<>();
         this.deserializer = deserializer;
     }
 
@@ -37,13 +39,18 @@ public class MyInterceptor implements MethodInterceptor {
                 setField(obj, entry.getKey(), entry.getValue());
             }
         }
-        var arrays = arrayRedirections.get(obj);
+        var arrays = arrayData.get(obj);
         if (arrays == null) return;
         for (var entry : arrays.entrySet()) {
-            var list = entry.getValue();
-            for (int i = 0; i < list.size(); i++) {
-                if (list.get(i) == null) continue;
-                setArrayItem(obj, entry.getKey(), i, list.get(i));
+            var arrayName = entry.getKey();
+            var data = entry.getValue();
+            var field = getField(obj, arrayName);
+            field.setAccessible(true);
+            field.set(obj, Array.newInstance(field.getType().getComponentType(), data.length));
+            field.setAccessible(false);
+            for (int i = 0; i < data.redirections.size(); i++) {
+                if (data.redirections.get(i) == null) continue;
+                setArrayItem(obj, entry.getKey(), i, data.redirections.get(i));
             }
         }
     }
@@ -72,22 +79,22 @@ public class MyInterceptor implements MethodInterceptor {
         field.setAccessible(false);
     }
 
+    public void setArraySize(Object obj, String fieldName, Integer length) {
+        if (!arrayData.containsKey(obj)) {
+            arrayData.put(obj, new HashMap<>());
+        }
+        var arrays = arrayData.get(obj);
+        arrays.put(fieldName, new ArrayData(length, new ArrayList<>()));
+    }
 
-    public void setArrayRedirection(Object obj, String fieldName, Integer idx, Integer id) throws Exception {
-        if (!arrayRedirections.containsKey(obj)) {
-            arrayRedirections.put(obj, new HashMap<>());
-        }
-        var objArrays = arrayRedirections.get(obj);
-        if (!objArrays.containsKey(fieldName)) {
-            objArrays.put(fieldName, new ArrayList<>());
-        }
-        var redirectionList = objArrays.get(fieldName);
+    public void setArrayRedirection(Object obj, String fieldName, Integer idx, Integer id) {
+        var array = arrayData.get(obj).get(fieldName);
 
         // Didn't find .resize or equivalent
-        while (redirectionList.size() <= idx) {
-            redirectionList.add(null);
+        while (array.redirections.size() <= idx) {
+            array.redirections.add(null);
         }
-        redirectionList.set(idx, id);
+        array.redirections.set(idx, id);
     }
 
     public void setArrayItem(Object obj, String fieldName, Integer idx, Integer id) throws Exception {
