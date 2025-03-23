@@ -54,44 +54,32 @@ public class Serializer {
 
                     var value = field.get(currentObject);
                     var type = field.getType();
-                    if (isPrimitive(value, type)) {
+                    if (value == null || type.isPrimitive() || type.equals(String.class)) {
                         writer.setPrimitiveField(field.getName(), value);
-                        continue;
-                    }
-
-                    if (type.isInterface()) {
-                        writer.addRedirection(field.getName(), getRedirectionId(value));
                         continue;
                     }
 
                     // If array consist of wrappers of primitives it will contain extra info.
                     if (type.isArray()) {
                         int length = Array.getLength(value);
+                        var arrayType = type.getComponentType();
                         // name@type metafield will have ONLY wrappers array.
-                        if (length > 0) {
-                            var elementValue = Array.get(value, 0);
-                            var tp = type.getComponentType();
-                            writer.startArrayField(field.getName(), tp.equals(Object.class) ? elementValue.getClass() : null, length);
-                        } else {
-                            writer.startArrayField(field.getName(), null, length);
-                        }
+                        writer.startArrayField(field.getName(), arrayType, length);
 
                         for (int i = 0; i < length; i++) {
                             var elementValue = Array.get(value, i);
-                            if (elementValue == null) {
-                                writer.addArrayPrimitive(elementValue);
-                            } else
-                            if (isPrimitive(elementValue, elementValue.getClass())) {
+                            if (elementValue == null || arrayType.isPrimitive() || arrayType.equals(String.class)) {
                                 writer.addArrayPrimitive(elementValue);
                             } else {
-                                if (elementValue.getClass().isInterface()) {
-                                    writer.addSimpleRedirection(getRedirectionId(elementValue));
-                                }
+                                writer.addSimpleRedirection(getRedirectionId(elementValue));
                             }
                         }
 
                         writer.endArray();
+                        continue;
                     }
+
+                    writer.addRedirection(field.getName(), getRedirectionId(value));
 
                     field.setAccessible(false);
                 }
@@ -110,8 +98,12 @@ public class Serializer {
     }
 
     // Return null if not primitive
-    private static boolean isPrimitive(Object value, Class<?> type) {
-        return value == null || type.isPrimitive() || type.equals(String.class) ||
+    private static boolean isPrimitive(Object value) {
+        if (value == null) {
+            return true;
+        }
+        var type = value.getClass();
+        return  type.isPrimitive() || type.equals(String.class) ||
                 type.equals(Integer.class) || type.equals(Short.class) || type.equals(Long.class) || type.equals(Byte.class)
                 || type.equals(Boolean.class) || type.equals(Character.class) || type.equals(Double.class) || type.equals(Float.class);
     }

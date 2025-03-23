@@ -1,57 +1,31 @@
 {
   "serialization" : [ {
-    "@className" : "lazySerde.SampleClass",
+    "@className" : "java.util.ArrayList",
     "@id" : 0,
     "@primary" : true,
-    "value1" : -1,
-    "value2" : 15.0,
-    "aha" : 13.2,
-    "sldkjfsldjf" : 1123123,
-    "mnn" : 1,
-    "io2wur" : 2,
-    "woieur" : "c",
-    "qowieuq" : false,
-    "sndfmsdfh" : "Simple String",
-    "sndfmsdfh2" : "\"Complex\" String",
-    "nullish" : null,
-    "handled@length" : 5,
-    "handled" : [ 0, 8, 16, 24, 32 ],
-    "list" : {
+    "elementData@length" : 10,
+    "elementData" : [ {
       "@redirect" : 1
-    },
-    "handledString@length" : 3,
-    "handledString" : [ "wow", "\"that", "actually works\"" ],
-    "secondOne@length" : 1,
-    "secondOne" : [ ]
+    }, {
+      "@redirect" : 2
+    }, {
+      "@redirect" : 3
+    }, null, null, null, null, null, null, null ],
+    "size" : 3
   }, {
-    "@className" : "java.util.ArrayList",
+    "@className" : "java.lang.Integer",
     "@id" : 1,
     "@primary" : false,
-    "elementData@type" : "java.lang.Integer",
-    "elementData@length" : 10,
-    "elementData" : [ 5, 3, null, 4, null, null, null, null, null, null ],
-    "size" : 4
+    "value" : 4
   }, {
-    "@className" : "lazySerde.SampleClass",
+    "@className" : "java.lang.Integer",
     "@id" : 2,
-    "@primary" : true,
-    "value1" : 1,
-    "value2" : 19.0,
-    "aha" : 13.0,
-    "sldkjfsldjf" : 1123,
-    "mnn" : -1,
-    "io2wur" : -2,
-    "woieur" : "i",
-    "qowieuq" : false,
-    "sndfmsdfh" : "Sile String",
-    "sndfmsdfh2" : "omplex\" String",
-    "nullish" : null,
-    "handled@length" : 5,
-    "handled" : [ 0, 2, 4, 6, 8 ],
-    "list" : null,
-    "handledString@length" : 3,
-    "handledString" : [ "WoW", "\"HHHHH", "slkjfslkdjfklsdjfklsdj" ],
-    "secondOne@length" : 1,
-    "secondOne" : [ ]
+    "@primary" : false,
+    "value" : 7
+  }, {
+    "@className" : "java.lang.Integer",
+    "@id" : 3,
+    "@primary" : false,
+    "value" : 99
   } ]
 }
