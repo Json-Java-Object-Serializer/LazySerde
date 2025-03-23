@@ -102,10 +102,12 @@ public class Deserializer {
         if (!offsets.containsKey(id)) {
             return null;
         }
-        if (!clazz.getName().equals(classNames.get(id))) {
+
+        Class<?> actualClazz = Class.forName(classNames.get(id));
+        if (!clazz.isAssignableFrom(actualClazz)) {
             throw new Exception("Asked class is wrong!");
         }
-        return readObject(id, false);
+        return readObject(id, clazz.isInterface());
     }
 
     //     Fills metafields and returns true if have to skip this row of JSON.
