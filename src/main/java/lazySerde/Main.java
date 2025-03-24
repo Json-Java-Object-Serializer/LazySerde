@@ -17,6 +17,7 @@ public class Main {
         sample.sldkjfsldjf = 1123123;
         sample.woieur = 'c';
         sample.primitiveWrapper = -123;
+        sample.qowieuq = false;
         sample.list = new ArrayList<>();
         sample.list.add(5);
         sample.list.add(3);
@@ -43,6 +44,7 @@ public class Main {
         sample2.aha = 13.0;
         sample2.sldkjfsldjf = 1123;
         sample2.woieur = 'i';
+        sample2.qowieuq = true;
         sample2.primitiveWrapper = 19;
         sample2.sndfmsdfh = "Sile String";
         sample2.sndfmsdfh2 = "omplex\" String";
@@ -74,13 +76,23 @@ public class Main {
         Deserializer deserializer = new Deserializer();
         deserializer.index(Path.of("out.json"));
 
-        var proxy = deserializer.createProxy(0);
-        System.out.println(proxy.getField("value1"));
-        System.out.println(proxy.getField("woieur"));
-        System.out.println(proxy.getField("sndfmsdfh"));
-        System.out.println(Arrays.toString((Integer[])proxy.getField("handled")));
-        var array = proxy.getField("notHandled");
-        System.out.println(array.toString());
+        SampleClass cur = (SampleClass)deserializer.getNext(SampleClass.class, (proxy) -> {
+            try {
+                System.out.println(proxy.getField("qowieuq"));
+                return (boolean)proxy.getField("qowieuq");
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        System.out.println(cur.qowieuq);
+        System.out.println(cur.sndfmsdfh);
+//        var proxy = deserializer.createProxy(0);
+//        System.out.println(proxy.getField("value1"));
+//        System.out.println(proxy.getField("woieur"));
+//        System.out.println(proxy.getField("sndfmsdfh"));
+//        System.out.println(Arrays.toString((Integer[])proxy.getField("handled")));
+//        var array = proxy.getField("notHandled");
+//        System.out.println(array.toString());
 //        SampleClass cur = (SampleClass)deserializer.getNext(SampleClass.class);
 //        System.out.println("Object read");
 //        System.out.println(cur.primitiveWrapper);

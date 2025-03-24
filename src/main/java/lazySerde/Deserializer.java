@@ -14,6 +14,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 
 public class Deserializer {
     private FileInputStream file;
@@ -92,11 +93,20 @@ public class Deserializer {
         }
     }
 
-    public Object getNext(Class<?> clazz) throws Exception {
+    public Object getNext(Class<?> clazz, Function<ObjectInterface, Boolean> filter) throws Exception {
         if (counter >= primary_ids.size()) {
             return null;
         }
-        int id = primary_ids.get(counter);
+        int id = counter;
+        for (; counter < primary_ids.size(); counter++) {
+            id = primary_ids.get(counter);
+            if (filter.apply(new ObjectInterface(id))) {
+                break;
+            }
+        }
+        if (counter == primary_ids.size()) {
+            return null;
+        }
         counter++;
 
         if (!offsets.containsKey(id)) {
@@ -368,10 +378,6 @@ public class Deserializer {
                 throw new IOException();
             }
         }
-    }
-
-    public ObjectInterface createProxy(int objectId) throws ClassNotFoundException {
-        return new ObjectInterface(objectId);
     }
 
     public class ObjectInterface {
