@@ -44,7 +44,7 @@ public class MyInterceptor implements MethodInterceptor {
         for (var entry : arrays.entrySet()) {
             var arrayName = entry.getKey();
             var data = entry.getValue();
-            var field = getField(obj, arrayName);
+            var field = Utils.getField(obj.getClass(), arrayName);
             field.setAccessible(true);
             field.set(obj, Array.newInstance(field.getType().getComponentType(), data.length));
             field.setAccessible(false);
@@ -52,15 +52,6 @@ public class MyInterceptor implements MethodInterceptor {
                 if (data.redirections.get(i) == null) continue;
                 setArrayItem(obj, entry.getKey(), i, data.redirections.get(i));
             }
-        }
-    }
-
-    private Field getField(Object obj, String fieldName) throws Exception {
-        try {
-            // In case non-lazy loaded class has some fields
-            return obj.getClass().getDeclaredField(fieldName);
-        } catch (Exception e) {
-            return obj.getClass().getSuperclass().getDeclaredField(fieldName);
         }
     }
 
@@ -72,7 +63,7 @@ public class MyInterceptor implements MethodInterceptor {
     }
 
     public void setField(Object obj, String fieldName, Integer id) throws Exception {
-        var field = getField(obj, fieldName);
+        var field = Utils.getField(obj.getClass(), fieldName);
         boolean isLazy = field.getType().isInterface();
         field.setAccessible(true);
         field.set(obj, deserializer.readObject(id, isLazy));
@@ -98,7 +89,7 @@ public class MyInterceptor implements MethodInterceptor {
     }
 
     public void setArrayItem(Object obj, String fieldName, Integer idx, Integer id) throws Exception {
-        var field = getField(obj, fieldName);
+        var field = Utils.getField(obj.getClass(), fieldName);
         boolean isLazy = field.getType().getComponentType().isInterface();
         field.setAccessible(true);
         Array.set(field.get(obj), idx, deserializer.readObject(id, isLazy));

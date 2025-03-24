@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class ContainersTest {
 
@@ -56,6 +54,32 @@ public class ContainersTest {
         Assertions.assertEquals(arrayList.size(), processed.size());
         for(int i = 0; i < arrayList.size(); i++) {
             Assertions.assertEquals(arrayList.get(i), processed.get(i));
+        }
+    }
+
+    @Test
+    void linkedHashSetTest() throws Exception {
+        Set<Integer> set = new LinkedHashSet<>();
+        set.add(4);
+        set.add(7);
+        set.add(99);
+
+        Serializer serializer = new Serializer("out.json");
+        serializer.serialize(set);
+        serializer.finish();
+
+        System.out.println("Interface List deserialization started");
+        Deserializer deserializer = new Deserializer();
+        deserializer.index(Path.of("out.json"));
+        Set<Integer> processed = (Set<Integer>) deserializer.getNext(Set.class);
+        System.out.println("Interface List deserialization ended");
+
+        Assertions.assertEquals(set.size(), processed.size());
+        for (var value : set) {
+            Assertions.assertTrue(processed.contains(value));
+        }
+        for (var value : processed) {
+            Assertions.assertTrue(set.contains(value));
         }
     }
 }

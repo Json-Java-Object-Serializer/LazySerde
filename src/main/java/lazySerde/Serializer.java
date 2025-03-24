@@ -3,8 +3,12 @@ package lazySerde;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Serializer {
     private final ArrayDeque<Object> writeQueue = new ArrayDeque<>();
@@ -44,7 +48,7 @@ public class Serializer {
                 writer.setMetaField("primary", isPrimary);
                 manager.setId(currentObject, currentObjectId);
 
-                var fields = clazz.getDeclaredFields();
+                var fields = Utils.getAllFields(clazz);
                 for (var field : fields) {
                     if (Modifier.isStatic(field.getModifiers())) {
                         continue;
@@ -95,16 +99,5 @@ public class Serializer {
 
     public void finish() throws IOException {
         writer.finish();
-    }
-
-    // Return null if not primitive
-    private static boolean isPrimitive(Object value) {
-        if (value == null) {
-            return true;
-        }
-        var type = value.getClass();
-        return  type.isPrimitive() || type.equals(String.class) ||
-                type.equals(Integer.class) || type.equals(Short.class) || type.equals(Long.class) || type.equals(Byte.class)
-                || type.equals(Boolean.class) || type.equals(Character.class) || type.equals(Double.class) || type.equals(Float.class);
     }
 }

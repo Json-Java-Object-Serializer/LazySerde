@@ -93,6 +93,10 @@ public class Deserializer {
         }
     }
 
+    public Object getNext(Class<?> clazz) throws Exception {
+        return getNext(clazz, (p) -> true);
+    }
+
     public Object getNext(Class<?> clazz, Function<ObjectInterface, Boolean> filter) throws Exception {
         if (counter >= primary_ids.size()) {
             return null;
@@ -198,7 +202,7 @@ public class Deserializer {
                     continue;
                 }
 
-                var field = clazz.getDeclaredField(name);
+                var field = Utils.getField(clazz, name);
                 jsonParser.nextToken();
                 if (parsePrimitive(jsonParser, field, result)) {
                     continue;
@@ -429,7 +433,7 @@ public class Deserializer {
                     yield readObject(targetId, false);
                 }
                 case START_ARRAY -> {
-                    var field = clazz.getDeclaredField(fieldName);
+                    var field = Utils.getField(clazz, fieldName);
                     var type = field.getType();
                     var componentType = type.getComponentType();
 
