@@ -207,12 +207,10 @@ public class Deserializer {
 
                 /*    Parse array     */
                 if (jsonParser.currentToken() == JsonToken.START_ARRAY) {
-                    int idx = 0;
-
                     var type = field.getType();
-                    Object array = null;
-
                     var componentType = type.getComponentType();
+
+                    Object array = null;
                     // TODO: lazy deserialize arrays of primitives
                     if (!isLazy || componentType.isPrimitive() || componentType.equals(String.class)) {
                         array = Array.newInstance(componentType, arrayLength);
@@ -223,6 +221,7 @@ public class Deserializer {
                         interceptor.setArraySize(result, name, arrayLength);
                     }
 
+                    int idx = 0;
                     while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
                         if (jsonParser.currentToken() == JsonToken.START_OBJECT) {
                             int redirection_id = parseRedirection(jsonParser);
@@ -371,66 +370,79 @@ public class Deserializer {
         }
     }
 
-//    private void parseArrayPrimitive(JsonParser jsonParser, String fieldType, Object array, int idx) throws Exception {
-//        switch (jsonParser.currentToken()) {
-//            case VALUE_NUMBER_INT: {
-//                if ("int".equals(fieldType)) {
-//                    Array.setInt(array, idx, jsonParser.getIntValue());
-//                } else if ("long".equals(fieldType)) {
-//                    Array.setLong(array, idx, jsonParser.getLongValue());
-//                } else if ("short".equals(fieldType)) {
-//                    Array.setShort(array, idx, jsonParser.getShortValue());
-//                } else if ("byte".equals(fieldType)) {
-//                    Array.setByte(array, idx, jsonParser.getByteValue());
-//                } else {
-//                    throw new Exception("Unknown field Type");
-//                }
-//                break;
-//            }
-//            case VALUE_NUMBER_FLOAT: {
-//                if ("float".equals(fieldType)) {
-//                    Array.setFloat(array, idx, jsonParser.getFloatValue());
-//                } else if ("double".equals(fieldType)) {
-//                    Array.setDouble(array, idx, jsonParser.getDoubleValue());
-//                } else {
-//                    throw new Exception("Unknown field Type");
-//                }
-//                break;
-//            }
-//            case VALUE_TRUE: {
-//                if ("boolean".equals(fieldType)) {
-//                    Array.setBoolean(array, idx, true);
-//                } else {
-//                    throw new Exception("Unknown field Type");
-//                }
-//                break;
-//            }
-//            case VALUE_FALSE: {
-//                if ("boolean".equals(fieldType)) {
-//                    Array.setBoolean(array, idx, false);
-//                } else {
-//                    throw new Exception("Unknown field Type");
-//                }
-//                break;
-//            }
-//            case VALUE_NULL: {
-//                Array.set(array, idx, null);
-//                break;
-//            }
-//            case VALUE_STRING: {
-//                if ("class java.lang.String".equals(fieldType)) {
-//                    Array.set(array, idx, jsonParser.getValueAsString());
-//                } else if ("char".equals(fieldType)) {
-//                    Array.set(array, idx, jsonParser.getValueAsString().toCharArray()[0]);
-//                } else {
-//                    throw new Exception("Unknown field type");
-//                }
-//                break;
-//            }
-//            default: {
-//                throw new IOException();
-//            }
-//        }
-//    }
+    public ObjectInterface createProxy(int objectId) throws ClassNotFoundException {
+        return new ObjectInterface(objectId);
+    }
 
+    public class ObjectInterface {
+        private final int objectId;
+        private final Class<?> clazz;
+
+        ObjectInterface(int objectId) throws ClassNotFoundException {
+            this.objectId = objectId;
+            this.clazz = Class.forName(classNames.get(objectId));
+        }
+
+        public Object getField(String fieldName) throws Exception {
+            JsonFactory jsonFactory = new JsonFactory();
+            file.getChannel().position(offsets.get(objectId));
+            JsonParser jsonParser = jsonFactory.createParser(file);
+
+            // Skip START_OBJECT token
+            jsonParser.nextToken();
+            while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                if (jsonParser.currentToken() == JsonToken.FIELD_NAME) {
+                    String name = jsonParser.currentName();
+                    if (name.equals(fieldName)) {
+                        break;
+                    } else if (name.endsWith("length")) {
+                        jsonParser.nextToken();
+                        arrayLength = jsonParser.getIntValue();
+                    }
+                } else if (jsonParser.currentToken() == JsonToken.START_OBJECT || jsonParser.currentToken() == JsonToken.START_ARRAY) {
+                    jsonParser.skipChildren();
+                }
+            }
+
+            if (jsonParser.currentToken() == JsonToken.END_OBJECT) {
+                System.out.println("Failed to read field " + fieldName + " on object with id = " + objectId);
+                return null;
+            }
+
+            // Go to the value of the field
+            jsonParser.nextToken();
+            return switch (jsonParser.currentToken()) {
+                case VALUE_NUMBER_INT -> jsonParser.getLongValue();
+                case VALUE_NUMBER_FLOAT -> jsonParser.getDoubleValue();
+                case VALUE_FALSE -> false;
+                case VALUE_TRUE -> true;
+                case VALUE_NULL -> null;
+                case VALUE_STRING -> jsonParser.getValueAsString();
+                case START_OBJECT -> {
+                    var targetId = parseRedirection(jsonParser);
+                    yield readObject(targetId, false);
+                }
+                case START_ARRAY -> {
+                    var field = clazz.getDeclaredField(fieldName);
+                    var type = field.getType();
+                    var componentType = type.getComponentType();
+
+                    Object array = Array.newInstance(componentType, arrayLength);
+
+                    int idx = 0;
+                    while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
+                        if (jsonParser.currentToken() == JsonToken.START_OBJECT) {
+                            int redirection_id = parseRedirection(jsonParser);
+                            Array.set(array, idx, readObject(redirection_id, false));
+                        } else if (jsonParser.currentToken() != JsonToken.VALUE_NULL) {
+                            parseArrayPW(jsonParser, type.getComponentType().toString(), array, idx);
+                        }
+                        idx++;
+                    }
+                    yield array;
+                }
+                case NOT_AVAILABLE, END_OBJECT, FIELD_NAME, END_ARRAY, VALUE_EMBEDDED_OBJECT -> throw new Exception("Parsing error");
+            };
+        }
+    }
 }

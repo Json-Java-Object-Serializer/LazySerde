@@ -28,6 +28,7 @@ public class Main {
         sample.handled = new Integer[5];
         for (int i = 0; i < sample.handled.length; i++) {
             sample.handled[i] = 8 * i;
+            sample.notHandled.add(9 * i * i);
         }
         sample.handledString = new String[3];
         sample.handledString[0] = "wow";
@@ -73,10 +74,18 @@ public class Main {
         Deserializer deserializer = new Deserializer();
         deserializer.index(Path.of("out.json"));
 
-        SampleClass cur = (SampleClass)deserializer.getNext(SampleClass.class);
-        System.out.println("Object read");
-        System.out.println(cur.primitiveWrapper);
-        System.out.println(Arrays.toString(cur.handled));
-        System.out.println(cur.list.get(0));
+        var proxy = deserializer.createProxy(0);
+        System.out.println(proxy.getField("value1"));
+        System.out.println(proxy.getField("woieur"));
+        System.out.println(proxy.getField("sndfmsdfh"));
+        System.out.println(Arrays.toString((Integer[])proxy.getField("handled")));
+        var array = proxy.getField("notHandled");
+        System.out.println(array.toString());
+//        SampleClass cur = (SampleClass)deserializer.getNext(SampleClass.class);
+//        System.out.println("Object read");
+//        System.out.println(cur.primitiveWrapper);
+//        System.out.println(Arrays.toString(cur.handled));
+//        System.out.println(cur.list.get(0));
     }
+
 }
