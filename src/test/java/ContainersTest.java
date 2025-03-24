@@ -58,6 +58,29 @@ public class ContainersTest {
     }
 
     @Test
+    void stringListTest() throws Exception {
+        List<String> arrayList = new ArrayList<>();
+        arrayList.add("haha1");
+        arrayList.add("hehe09123");
+        arrayList.add("ashghjkdhkjgdsjsdagh");
+
+        Serializer serializer = new Serializer("out.json");
+        serializer.serialize(arrayList);
+        serializer.finish();
+
+        System.out.println("Interface List deserialization started");
+        Deserializer deserializer = new Deserializer();
+        deserializer.index(Path.of("out.json"));
+        List<Integer> processed = (List<Integer>) deserializer.getNext(List.class);
+        System.out.println("Interface List deserialization ended");
+
+        Assertions.assertEquals(arrayList.size(), processed.size());
+        for(int i = 0; i < arrayList.size(); i++) {
+            Assertions.assertEquals(arrayList.get(i), processed.get(i));
+        }
+    }
+
+    @Test
     void linkedHashSetTest() throws Exception {
         Set<Integer> set = new LinkedHashSet<>();
         set.add(4);

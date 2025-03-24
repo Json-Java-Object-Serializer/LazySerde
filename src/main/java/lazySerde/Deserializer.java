@@ -245,7 +245,7 @@ public class Deserializer {
                                 interceptor.setArrayItem(result, name, idx, redirection_id);
                             }
                         } else if (jsonParser.currentToken() != JsonToken.VALUE_NULL) {
-                            parseArrayPW(jsonParser, type.getComponentType().toString(), array, idx);
+                            parseArrayPW(jsonParser, componentType, array, idx);
                         }
                         idx++;
                     }
@@ -348,14 +348,30 @@ public class Deserializer {
         return true;
     }
 
-    private void parseArrayPW(JsonParser jsonParser, String fieldType, Object array, int idx) throws Exception {
+    private void parseArrayPW(JsonParser jsonParser, Class<?> fieldType, Object array, int idx) throws Exception {
         switch (jsonParser.currentToken()) {
             case VALUE_NUMBER_INT: {
-                Array.set(array, idx, jsonParser.getLongValue());
+                if (fieldType.equals(int.class)) {
+                    Array.set(array, idx, jsonParser.getIntValue());
+                } else if (fieldType.equals(long.class)) {
+                    Array.set(array, idx, jsonParser.getLongValue());
+                } else if (fieldType.equals(byte.class)) {
+                    Array.set(array, idx, jsonParser.getByteValue());
+                } else if (fieldType.equals(short.class)) {
+                    Array.set(array, idx, jsonParser.getShortValue());
+                } else {
+                    System.out.println("Non of the wrappers match this type: " + fieldType.getName());
+                }
                 break;
             }
             case VALUE_NUMBER_FLOAT: {
-                Array.set(array, idx, jsonParser.getDoubleValue());
+                if (fieldType.equals(float.class)) {
+                    Array.set(array, idx, jsonParser.getFloatValue());
+                } else if (fieldType.equals(double.class)) {
+                    Array.set(array, idx, jsonParser.getDoubleValue());
+                } else {
+                    System.out.println("Non of the wrappers match this type: " + fieldType.getName());
+                }
                 break;
             }
             case VALUE_TRUE: {
@@ -371,7 +387,7 @@ public class Deserializer {
                 break;
             }
             case VALUE_STRING: {
-                if ("char".equals(fieldType)) {
+                if (fieldType.equals(char.class)) {
                     Array.set(array, idx, jsonParser.getValueAsString().toCharArray()[0]);
                 } else {
                     Array.set(array, idx, jsonParser.getValueAsString());
@@ -445,7 +461,7 @@ public class Deserializer {
                             int redirection_id = parseRedirection(jsonParser);
                             Array.set(array, idx, readObject(redirection_id, false));
                         } else if (jsonParser.currentToken() != JsonToken.VALUE_NULL) {
-                            parseArrayPW(jsonParser, type.getComponentType().toString(), array, idx);
+                            parseArrayPW(jsonParser, componentType, array, idx);
                         }
                         idx++;
                     }

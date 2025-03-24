@@ -14,19 +14,34 @@
     "size" : 3,
     "modCount" : 3
   }, {
-    "@className" : "java.lang.Integer",
+    "@className" : "java.lang.String",
     "@id" : 1,
     "@primary" : false,
-    "value" : 4
+    "value@type" : "byte",
+    "value@length" : 5,
+    "value" : [ 104, 97, 104, 97, 49 ],
+    "coder" : 0,
+    "hash" : 0,
+    "hashIsZero" : false
   }, {
-    "@className" : "java.lang.Integer",
+    "@className" : "java.lang.String",
     "@id" : 2,
     "@primary" : false,
-    "value" : 7
+    "value@type" : "byte",
+    "value@length" : 9,
+    "value" : [ 104, 101, 104, 101, 48, 57, 49, 50, 51 ],
+    "coder" : 0,
+    "hash" : 0,
+    "hashIsZero" : false
   }, {
-    "@className" : "java.lang.Integer",
+    "@className" : "java.lang.String",
     "@id" : 3,
     "@primary" : false,
-    "value" : 99
+    "value@type" : "byte",
+    "value@length" : 20,
+    "value" : [ 97, 115, 104, 103, 104, 106, 107, 100, 104, 107, 106, 103, 100, 115, 106, 115, 100, 97, 103, 104 ],
+    "coder" : 0,
+    "hash" : 0,
+    "hashIsZero" : false
   } ]
 }
